@@ -1,0 +1,104 @@
+/* NGO module — verification state UI enhancements */
+
+/* Amber pending badge (welcome header pill) */
+.ngo-status-badge--pending {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.ngo-status-badge--registered {
+  background: #F8FAFC;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+/* Neutral review banner — replaces green CTA when documents submitted */
+.ngo-verify-review-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 55%, #F8FAFC 100%);
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ngo-verify-review-banner__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ngo-verify-review-banner__content h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.ngo-verify-review-banner__content p {
+  font-size: 0.875rem;
+  color: #64748B;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 640px;
+}
+
+.ngo-verify-review-banner__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ngo-verify-review-banner__status svg {
+  color: #64748B;
+  flex-shrink: 0;
+}
+
+/* Review status badge in stat card */
+.ngo-review-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #B45309;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 999px;
+  margin-top: 0.15rem;
+}
+
+.ngo-review-badge--verified {
+  color: #15803D;
+  background: #ECFDF5;
+  border-color: #86EFAC;
+}
+
+@media (max-width: 768px) {
+  .ngo-verify-review-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ngo-verify-review-banner__status {
+    align-self: flex-start;
+  }
+}

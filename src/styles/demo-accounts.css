@@ -1,0 +1,367 @@
+/* Demo Accounts — clean trigger + modal (Login page) */
+
+#login-view .login-demo-access {
+  margin: 0 1.5rem 1.5rem;
+  padding-top: 0.25rem;
+}
+
+#login-view .login-demo-access__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  color: #94A3B8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+#login-view .login-demo-access__divider::before,
+#login-view .login-demo-access__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+#login-view .login-demo-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 46px !important;
+  padding: 0.7rem 1rem !important;
+  font-family: inherit;
+  font-size: 0.875rem !important;
+  font-weight: 600;
+  color: #0F172A !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+#login-view .login-demo-trigger:hover {
+  background: #F0FDF4 !important;
+  border-color: #86EFAC !important;
+  color: #15803D !important;
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+#login-view .login-demo-trigger svg:first-child {
+  color: #16A34A;
+}
+
+#login-view .login-demo-access__hint {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+/* Modal overlay */
+.demo-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  animation: demoModalFade 0.2s ease both;
+}
+
+@keyframes demoModalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.demo-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: min(84vh, 640px);
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: demoModalIn 0.25s ease both;
+}
+
+@keyframes demoModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.demo-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem 1rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.demo-modal__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #16A34A;
+}
+
+.demo-modal__head h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.demo-modal__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+.demo-modal__sub code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #334155;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+}
+
+.demo-modal__close {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-height: unset !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  border-radius: 10px !important;
+  border: 1px solid #E5E7EB !important;
+  background: #FFFFFF !important;
+  color: #64748B !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.demo-modal__close:hover {
+  background: #F8FAFC !important;
+  color: #0F172A !important;
+  transform: none !important;
+}
+
+.demo-modal__tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.85rem 1.1rem;
+  overflow-x: auto;
+  border-bottom: 1px solid #F1F5F9;
+  scrollbar-width: none;
+}
+
+.demo-modal__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.demo-modal__tab {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  min-height: unset !important;
+  padding: 0.45rem 0.75rem !important;
+  font-family: inherit;
+  font-size: 0.75rem !important;
+  font-weight: 600;
+  color: #64748B !important;
+  background: #F8FAFC !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.demo-modal__tab:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
+  transform: none !important;
+}
+
+.demo-modal__tab.is-active {
+  background: #F0FDF4 !important;
+  border-color: #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+.demo-modal__tab--receiver.is-active {
+  background: #F0FDFA !important;
+  border-color: #99F6E4 !important;
+  color: #0F766E !important;
+}
+
+.demo-modal__tab--ngo.is-active {
+  background: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #1D4ED8 !important;
+}
+
+.demo-modal__tab--admin.is-active {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #334155 !important;
+}
+
+.demo-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem 1.1rem 1.25rem;
+  overflow-y: auto;
+}
+
+.demo-modal__option {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: unset !important;
+  padding: 0.9rem 1rem !important;
+  text-align: left;
+  font-family: inherit;
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.demo-modal__option:hover {
+  background: #F8FAFC !important;
+  border-color: #86EFAC !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+  transform: none !important;
+}
+
+.demo-modal__option--ngo:hover { border-color: #93C5FD !important; }
+.demo-modal__option--receiver:hover { border-color: #5EEAD4 !important; }
+.demo-modal__option--admin:hover { border-color: #CBD5E1 !important; }
+
+.demo-modal__option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.demo-modal__option-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.demo-modal__option-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.demo-modal__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+}
+
+.demo-modal__status.is-verified {
+  background: #ECFDF5;
+  color: #15803D;
+}
+
+.demo-modal__status.is-pending {
+  background: #FFFBEB;
+  color: #B45309;
+}
+
+.demo-modal__status.is-admin {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.demo-modal__option-email {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748B;
+  word-break: break-all;
+}
+
+.demo-modal__option-meta {
+  font-size: 0.6875rem;
+  color: #94A3B8;
+  line-height: 1.35;
+}
+
+.demo-modal__option-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: #16A34A;
+  border-radius: 9px;
+}
+
+.demo-modal__option--ngo .demo-modal__option-cta { background: #2563EB; }
+.demo-modal__option--receiver .demo-modal__option-cta { background: #0D9488; }
+.demo-modal__option--admin .demo-modal__option-cta { background: #475569; }
+
+@media (max-width: 560px) {
+  .demo-modal {
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .demo-modal__option {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .demo-modal__option-cta {
+    justify-content: center;
+  }
+
+  #login-view .login-demo-access {
+    margin: 0 1.15rem 1.25rem;
+  }
+}

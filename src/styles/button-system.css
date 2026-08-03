@@ -1,0 +1,769 @@
+/* ==========================================================================
+   Give Away — Unified Button System (React app)
+   Loaded last — standardizes every button size, spacing, and placement
+   ========================================================================== */
+
+:root {
+  --btn-height-sm: 36px;
+  --btn-height-md: 42px;
+  --btn-height-lg: 48px;
+  --btn-padding-sm: 0.5rem 0.875rem;
+  --btn-padding-md: 0.6875rem 1.25rem;
+  --btn-padding-lg: 0.8125rem 1.625rem;
+  --btn-font-sm: 0.8125rem;
+  --btn-font-md: 0.875rem;
+  --btn-font-lg: 0.9375rem;
+  --btn-gap: 0.45rem;
+  --btn-radius: 12px;
+}
+
+/* --- Base interactive control --- */
+button,
+input[type="submit"],
+input[type="button"],
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-ghost,
+.btn-text,
+.btn-secondary-blue,
+.btn-hero-primary,
+.btn-hero-secondary,
+.btn-sm-card,
+.login-submit,
+.auth-submit-btn,
+.admin-btn,
+.btn-approve,
+.btn-reject,
+.btn-verify-cta,
+a.btn-outline,
+a.btn-hero-primary,
+a.btn-hero-secondary,
+a.btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap);
+  min-height: var(--btn-height-md);
+  padding: var(--btn-padding-md);
+  font-family: inherit;
+  font-size: var(--btn-font-md);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
+  box-sizing: border-box;
+}
+
+button:focus-visible,
+a.btn-outline:focus-visible,
+a.btn-hero-primary:focus-visible,
+a.btn-hero-secondary:focus-visible {
+  outline: 2px solid #22C55E;
+  outline-offset: 2px;
+}
+
+button:disabled,
+button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* --- Sizes --- */
+.btn-sm,
+.btn-sm-card,
+.admin-btn,
+.btn-outline.btn-sm,
+.btn-ghost.btn-sm {
+  min-height: var(--btn-height-sm);
+  padding: var(--btn-padding-sm);
+  font-size: var(--btn-font-sm);
+  border-radius: 10px;
+}
+
+.btn-lg,
+.btn-hero-primary,
+.btn-hero-secondary {
+  min-height: var(--btn-height-lg);
+  padding: var(--btn-padding-lg);
+  font-size: var(--btn-font-lg);
+}
+
+/* Full-width modifier */
+.btn-block {
+  width: 100%;
+}
+
+/* --- Primary (green) --- */
+.btn-primary,
+.login-submit,
+.auth-submit-btn,
+.auth-btn-green,
+.btn-sm-card,
+.btn-verify-cta {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.28) !important;
+}
+
+.btn-primary:hover:not(:disabled),
+.login-submit:hover:not(:disabled),
+.auth-submit-btn:hover:not(:disabled),
+.auth-btn-green:hover:not(:disabled),
+.btn-sm-card:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%) !important;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.34) !important;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled),
+.login-submit:active:not(:disabled),
+.auth-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Auth role variants */
+.auth-btn-blue.login-submit,
+.auth-btn-blue.auth-submit-btn {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32) !important;
+}
+
+.auth-btn-teal.login-submit,
+.auth-btn-teal.auth-submit-btn {
+  background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%) !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32) !important;
+}
+
+.auth-btn-admin.login-submit,
+.auth-btn-admin.auth-submit-btn {
+  background: linear-gradient(135deg, #475569 0%, #1E293B 100%) !important;
+  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.32) !important;
+}
+
+/* --- Secondary / blue outline --- */
+.btn-secondary-blue,
+.btn-hero-secondary {
+  background: #FFFFFF !important;
+  border: 1.5px solid #2563EB !important;
+  color: #2563EB !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08) !important;
+}
+
+.btn-secondary-blue:hover:not(:disabled),
+.btn-hero-secondary:hover:not(:disabled) {
+  background: #EFF6FF !important;
+  border-color: #1D4ED8 !important;
+  color: #1E40AF !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.14) !important;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+  transform: translateY(-1px);
+}
+
+/* --- Outline --- */
+.btn-outline {
+  background: #FFFFFF !important;
+  border: 1.5px solid #22C55E !important;
+  color: #16A34A !important;
+  box-shadow: none !important;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #ECFDF5 !important;
+  border-color: #16A34A !important;
+  color: #15803D !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.12) !important;
+}
+
+/* --- Ghost --- */
+.btn-ghost {
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  color: #6B7280 !important;
+  box-shadow: none !important;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: #F8FAFC !important;
+  border-color: #D1D5DB !important;
+  color: #111827 !important;
+}
+
+/* --- Text / link --- */
+.btn-text {
+  background: transparent !important;
+  border: none !important;
+  color: #2563EB !important;
+  box-shadow: none !important;
+  min-height: auto;
+  padding: 0.35rem 0.5rem;
+}
+
+.btn-text:hover {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  transform: none !important;
+}
+
+/* --- Hero CTA --- */
+.btn-hero-primary {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35) !important;
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* --- Success / danger actions --- */
+.btn-approve,
+.admin-btn-approve {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25) !important;
+}
+
+.btn-reject,
+.btn-danger,
+.admin-btn-reject {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.28) !important;
+}
+
+.btn-approve:hover:not(:disabled),
+.admin-btn-approve:hover:not(:disabled),
+.btn-reject:hover:not(:disabled),
+.admin-btn-reject:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.admin-btn {
+  min-height: var(--btn-height-sm);
+  padding: 0.45rem 0.875rem;
+  font-size: var(--btn-font-sm);
+}
+
+/* --- Verify CTA (inside green banner) --- */
+.ngo-verify-cta .btn-verify-cta,
+.donor-verify-cta .btn-verify-cta {
+  background: #FFFFFF !important;
+  color: #16A34A !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  min-height: var(--btn-height-md);
+  padding: 0.75rem 1.35rem;
+}
+
+.ngo-verify-cta .btn-verify-cta:hover,
+.donor-verify-cta .btn-verify-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* --- Quick action tiles --- */
+.donor-quick-btn,
+.receiver-quick-btn,
+.ngo-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 96px;
+  padding: 1rem 0.75rem;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.donor-quick-btn:hover:not(:disabled),
+.receiver-quick-btn:hover:not(:disabled),
+.ngo-quick-btn:hover:not(:disabled) {
+  border-color: #86EFAC;
+  background: #ECFDF5;
+  color: #16A34A;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.12);
+}
+
+.receiver-quick-btn:hover:not(:disabled):not(.receiver-quick-btn--premium):not(.receiver-quick-btn--compact) {
+  border-color: #93C5FD;
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.receiver-quick-btn--premium:hover:not(:disabled) {
+  border-color: transparent !important;
+}
+
+.donor-quick-btn:disabled,
+.receiver-quick-btn:disabled,
+.ngo-quick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.donor-quick-btn-icon,
+.receiver-quick-btn-icon,
+.ngo-quick-btn-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+/* --- Amount / option chips --- */
+.donor-amount-btn {
+  min-height: var(--btn-height-sm);
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #E5E7EB;
+  background: #FFFFFF;
+  font-size: var(--btn-font-sm);
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.donor-amount-btn:hover {
+  border-color: #86EFAC;
+  background: #F0FDF4;
+}
+
+.donor-amount-btn.selected {
+  border-color: #22C55E;
+  background: #ECFDF5;
+  color: #16A34A;
+}
+
+/* --- Demo chips (login) --- */
+.demo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: #F8FAFC;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: auto;
+  margin: 0;
+}
+
+.demo-chip:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Back links --- */
+.ngo-back-btn,
+.donor-back-btn,
+.receiver-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0;
+  background: none !important;
+  border: none !important;
+  color: #6B7280 !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: none !important;
+  min-height: auto;
+}
+
+.ngo-back-btn:hover,
+.donor-back-btn:hover,
+.receiver-back-btn:hover {
+  color: #2563EB !important;
+}
+
+/* --- Form action rows — consistent placement everywhere --- */
+.form-actions,
+.donor-form-actions,
+.receiver-form-actions,
+.ngo-form-actions,
+.donor-reg-actions,
+.receiver-reg-actions,
+.action-btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #F3F4F6;
+}
+
+.form-actions--split,
+.donor-form-actions,
+.receiver-form-actions,
+.ngo-form-actions {
+  justify-content: space-between;
+}
+
+.form-actions__start,
+.form-actions__end,
+.donor-form-actions > div:first-child,
+.receiver-form-actions > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.form-actions__end,
+.receiver-form-actions > div:last-child,
+.donor-form-actions > div:last-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-left: auto;
+}
+
+/* Registration: back left, submit right */
+.ngo-reg-actions,
+.donor-reg-actions,
+.receiver-reg-actions {
+  justify-content: space-between;
+}
+
+.ngo-reg-actions .btn-outline,
+.donor-reg-actions .btn-outline,
+.receiver-reg-actions .btn-outline {
+  min-width: 110px;
+}
+
+.ngo-form-actions .login-submit:only-child,
+.donor-form-actions .login-submit:only-child,
+.receiver-form-actions .login-submit:only-child,
+.form-actions .login-submit:only-child {
+  margin-left: auto;
+}
+
+.card-action-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0 1.25rem 1rem;
+}
+
+/* Login submit — full width only in auth forms */
+.auth-login-form .login-submit,
+.login-form .login-submit,
+.login-card > .auth-login-form .login-submit,
+.ngo-reg-actions .login-submit,
+.donor-reg-actions .login-submit,
+.receiver-reg-actions .login-submit,
+#login-view .login-submit,
+.cta-banner-section .login-submit {
+  width: 100%;
+}
+
+/* Dashboard / module forms — auto width, aligned */
+.donor-form-card .login-submit,
+.receiver-form-card .login-submit,
+.ngo-form-card .login-submit,
+.ngo-form-actions .login-submit,
+.donor-form-actions .login-submit,
+.receiver-form-actions .login-submit,
+.ngo-locked-overlay .login-submit,
+.donor-empty .login-submit,
+.receiver-empty .login-submit,
+.ngo-empty .login-submit {
+  width: auto;
+  min-width: 148px;
+  margin-top: 0;
+}
+
+/* Standalone submit in form cards */
+.ngo-form-card > form > .login-submit,
+.donor-form-card > .login-submit,
+.receiver-form-card > .login-submit {
+  margin-top: 1.25rem;
+}
+
+/* Inline button groups */
+.btn-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Section link buttons */
+.receiver-section-link,
+.ngo-section-link {
+  background: none !important;
+  border: none !important;
+  color: #2563EB !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  min-height: auto;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.receiver-section-link:hover,
+.ngo-section-link:hover {
+  text-decoration: underline;
+  transform: none !important;
+}
+
+/* Profile tab toggles */
+.receiver-profile-tabs button {
+  min-height: var(--btn-height-sm);
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.receiver-profile-tabs button.active {
+  background: #EFF6FF;
+  border-color: #2563EB;
+  color: #2563EB;
+}
+
+/* Nav / sidebar — exclude from button system sizing */
+.auth-tab,
+.nav-link,
+.nav-icon-btn,
+.theme-toggle-btn,
+.sidebar-link,
+.sidebar-theme-btn,
+.sidebar-logout-btn,
+.dashboard-hamburger,
+.dashboard-drawer-close,
+.dashboard-topbar-brand,
+.dashboard-sidebar-brand,
+.footer-link,
+.mobile-menu-toggle,
+.role-auth-close,
+.role-select-option,
+.role-select-card,
+.role-select-option,
+.role-select-card,
+.register-role-option,
+.register-role-quick-link,
+.auth-password-toggle,
+.auth-footer-link {
+  /* preserve their own styles — reset legacy green button defaults */
+}
+
+/* Footer links must stay as plain text links */
+.main-footer button.footer-link,
+button.footer-link {
+  display: inline;
+  min-height: unset !important;
+  height: auto !important;
+  padding: 0 !important;
+  gap: 0;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #94A3B8 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  white-space: normal;
+}
+
+.main-footer button.footer-link:hover,
+button.footer-link:hover {
+  color: #FFFFFF !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.dashboard-hamburger,
+.dashboard-drawer-close,
+.dashboard-topbar-brand,
+.dashboard-sidebar-brand,
+.sidebar-theme-btn,
+.sidebar-logout-btn {
+  box-shadow: none !important;
+}
+
+.dash-header__menu-btn,
+.dash-header__icon-btn,
+.dash-header__profile-trigger,
+.dash-header__brand,
+.dash-header__dropdown-item {
+  /* Reset legacy green button defaults without stripping header shadows */
+  font-family: inherit;
+}
+
+/* OTP row buttons */
+.donor-otp-btn,
+.receiver-otp-btn,
+.ngo-otp-btn {
+  min-height: var(--btn-height-sm);
+  padding: 0.5rem 0.875rem;
+  font-size: var(--btn-font-sm);
+  background: #FFFFFF !important;
+  border: 1.5px solid #2563EB !important;
+  color: #2563EB !important;
+  box-shadow: none !important;
+}
+
+.donor-otp-btn:hover:not(:disabled),
+.receiver-otp-btn:hover:not(:disabled),
+.ngo-otp-btn:hover:not(:disabled) {
+  background: #EFF6FF !important;
+}
+
+/* Role auth modal */
+.role-auth-btn {
+  min-height: var(--btn-height-md);
+  padding: var(--btn-padding-md);
+  border-radius: var(--btn-radius);
+  font-weight: 600;
+  font-size: var(--btn-font-md);
+}
+
+.role-auth-btn--primary {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+.role-auth-btn--secondary {
+  background: #FFFFFF !important;
+  border: 1.5px solid #E5E7EB !important;
+  color: #374151 !important;
+}
+
+/* Nav CTA */
+.nav-link-cta {
+  min-height: var(--btn-height-sm);
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--btn-radius) !important;
+}
+
+/* Export / toolbar rows */
+.btn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+/* Empty state CTA */
+.empty-state-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.ngo-locked-overlay {
+  text-align: center;
+  padding: 3rem;
+}
+
+.ngo-locked-overlay .login-submit {
+  margin-top: 1rem;
+}
+
+/* Request Donations — category cards are not primary buttons */
+button.rd-cat-card {
+  min-height: unset !important;
+  justify-content: flex-start !important;
+  white-space: normal;
+}
+
+@media (max-width: 640px) {
+  .form-actions,
+  .donor-form-actions,
+  .receiver-form-actions,
+  .ngo-form-actions,
+  .ngo-reg-actions,
+  .donor-reg-actions,
+  .receiver-reg-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions__end,
+  .receiver-form-actions > div:last-child,
+  .donor-form-actions > div:last-child {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .ngo-reg-actions .login-submit,
+  .donor-reg-actions .login-submit,
+  .receiver-reg-actions .login-submit,
+  .donor-form-actions .login-submit,
+  .receiver-form-actions .login-submit,
+  .ngo-form-actions .login-submit {
+    width: 100%;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    width: 100%;
+  }
+}

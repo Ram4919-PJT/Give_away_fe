@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Give Away — Aja Abayahastham Charity Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme-redesign.css">
+  <link rel="stylesheet" href="donor-module.css">
+  <link rel="stylesheet" href="receiver-module.css">
+  <link rel="stylesheet" href="ngo-module.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            wire: {
+              border: '#E2E8F0',
+              label: '#334155',
+              muted: '#64748B',
+              placeholder: '#94A3B8',
+              surface: '#F8FAFC',
+              canvas: '#F1F5F9'
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body>
+
+  <!-- ==========================================
+       Global Navigation Header
+       ========================================== -->
+  <header class="main-header">
+    <div class="logo-section" onclick="showView('home'); window.scrollTo(0,0);" style="cursor:pointer;" role="button" tabindex="0">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="url(#navLogoGrad)" stroke="#fff" stroke-width="1"/><path d="M10 19c0-2.5 2-5 6-5s6 2.5 6 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="10" r="1.5" fill="#86EFAC"/><defs><linearGradient id="navLogoGrad" x1="4" y1="4" x2="28" y2="28"><stop stop-color="#22C55E"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs></svg>
+      </div>
+      <div>
+        <span class="logo-text">Give Away</span>
+        <span class="logo-subtext">Aja Abayahastham</span>
+      </div>
+    </div>
+
+    <nav class="main-nav">
+      <ul class="nav-center-links" id="public-nav-links">
+        <li><a href="#home" class="nav-link" onclick="scrollToLandingSection('home'); return false;">Home</a></li>
+        <li><a href="#donate" class="nav-link" onclick="handleNavRoleAction('donor'); return false;">Donate</a></li>
+        <li><a href="#request" class="nav-link" onclick="handleNavRoleAction('receiver'); return false;">Request</a></li>
+        <li><a href="#ngos" class="nav-link" onclick="handleNavRoleAction('ngo'); return false;">NGOs</a></li>
+        <li><a href="#stories" class="nav-link" onclick="scrollToLandingSection('stories'); return false;">Success Stories</a></li>
+        <li><a href="#about" class="nav-link" onclick="scrollToLandingSection('about'); return false;">About</a></li>
+        <li><a href="#contact" class="nav-link" onclick="scrollToLandingSection('contact'); return false;">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button type="button" class="nav-icon-btn theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <button class="mobile-menu-toggle nav-icon-btn" aria-label="Open menu">☰</button>
+      </div>
+      
+      <!-- Unauthenticated Navigation Links -->
+      <ul class="nav-links" id="logged-out-nav">
+        <li><a href="#" class="nav-link" id="nav-login">Login</a></li>
+        <li><a href="#" class="nav-link nav-link-cta" id="nav-register">Register</a></li>
+      </ul>
+
+      <!-- Authenticated Navigation Links -->
+      <ul class="nav-links" id="logged-in-nav" style="display: none;">
+        <li><a href="#" class="nav-link" id="nav-dashboard-link">Dashboard</a></li>
+        <li class="nav-user-block">
+          <button type="button" class="nav-icon-btn" aria-label="Notifications" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+          <div class="nav-user-meta">
+            <div id="nav-dashboard-user" class="nav-user-name">User Name</div>
+            <div id="nav-dashboard-role" class="nav-user-role">Role</div>
+          </div>
+          <button id="nav-logout" class="btn-ghost btn-sm">Logout</button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ==========================================
+       VIEW: Landing Page
+       ========================================== -->
+  <main class="page-view active-view" id="landing-view">
+    <section class="hero-section" id="home">
+      <div class="container hero-grid">
+        <div class="hero-info">
+          <p class="hero-eyebrow">Community Donation Platform</p>
+          <h1 class="hero-title">Share More. Waste Less.<br>Help Someone Today.</h1>
+          <p class="hero-tagline">
+            Give Away connects generous donors with verified NGOs and families in need. Donate items or funds, request help, and track every delivery with full transparency.
+          </p>
+          <div class="hero-cta">
+            <div id="hero-logged-out-ctas" class="hero-cta-row">
+              <button class="btn-hero-primary" onclick="handleFooterAction('donate');">Donate Now</button>
+              <button type="button" class="btn-hero-secondary" onclick="handleFooterAction('receiver');">Request Help</button>
+            </div>
+            <div id="hero-logged-in-ctas" style="display: none;">
+              <span class="badge badge-success" id="hero-welcome-badge">Signed in</span>
+              <p id="hero-welcome-text" class="hero-welcome-text">Welcome back!</p>
+              <div class="hero-cta-row">
+                <button class="btn-hero-primary" onclick="showView('dashboard');">Open Dashboard</button>
+                <button type="button" class="btn-ghost btn-hero-secondary" onclick="handleLogout();">Sign Out</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-mockup">
+          <div class="hero-illustration">
+            <div class="hero-illustration-icon" aria-hidden="true">🤝</div>
+            <p class="hero-panel-title">People helping people</p>
+            <p class="hero-panel-subtitle">Trusted relief · Verified partners · Real impact</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats-section">
+      <div class="container stats-grid-modern">
+        <div class="stat-card-modern">
+          <div class="stat-number">12,400+</div>
+          <div class="stat-label">Total Donations</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number">3,200</div>
+          <div class="stat-label">Families Helped</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number">300+</div>
+          <div class="stat-label">Active NGOs</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number">98%</div>
+          <div class="stat-label">Successful Deliveries</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Donation Categories -->
+    <section class="categories-section" id="donate">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Donation Categories</h2>
+          <p>Browse what you can give — every item finds a verified home.</p>
+        </div>
+        <div class="category-grid">
+          <div class="category-card"><div class="category-card-icon">👕</div><h3>Clothes</h3></div>
+          <div class="category-card"><div class="category-card-icon">📚</div><h3>Books</h3></div>
+          <div class="category-card"><div class="category-card-icon">🍲</div><h3>Food</h3></div>
+          <div class="category-card"><div class="category-card-icon">🛋️</div><h3>Furniture</h3></div>
+          <div class="category-card"><div class="category-card-icon">💻</div><h3>Electronics</h3></div>
+          <div class="category-card"><div class="category-card-icon">🏥</div><h3>Medical Supplies</h3></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Donations -->
+    <section class="featured-section">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Featured Donations</h2>
+          <p>Available items from verified donors in your community.</p>
+        </div>
+        <div class="donation-grid">
+          <article class="donation-item-card">
+            <div class="donation-item-image" aria-hidden="true">🧥</div>
+            <div class="donation-item-body">
+              <h3>Winter Jackets (5)</h3>
+              <p class="donation-item-meta">Donor: Meera Nair · Mumbai · Good condition</p>
+              <div class="donation-item-footer">
+                <span class="badge-available">Available</span>
+                <button type="button" class="btn-sm-card" onclick="handleNavRoleAction('receiver');">Request</button>
+              </div>
+            </div>
+          </article>
+          <article class="donation-item-card">
+            <div class="donation-item-image" aria-hidden="true">📦</div>
+            <div class="donation-item-body">
+              <h3>First Aid Kits (15)</h3>
+              <p class="donation-item-meta">Donor: Rajesh Mehta · Pune · New</p>
+              <div class="donation-item-footer">
+                <span class="badge-available">Available</span>
+                <button type="button" class="btn-sm-card" onclick="handleNavRoleAction('receiver');">Request</button>
+              </div>
+            </div>
+          </article>
+          <article class="donation-item-card">
+            <div class="donation-item-image" aria-hidden="true">🪑</div>
+            <div class="donation-item-body">
+              <h3>Study Desk &amp; Chair</h3>
+              <p class="donation-item-meta">Donor: Anonymous · Bengaluru · Used</p>
+              <div class="donation-item-footer">
+                <span class="badge-available">Available</span>
+                <button type="button" class="btn-sm-card" onclick="handleNavRoleAction('receiver');">Request</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platform Features (Roles) -->
+    <section class="features-section" id="ngos">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Who uses Give Away</h2>
+          <p>Four clear roles keep donations, requests, and approvals organized.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-box">D</div>
+            <h3 class="feature-title">Donors</h3>
+            <p class="feature-desc">Give items or funds, then track where your support goes.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon-box">N</div>
+            <h3 class="feature-title">NGO Partners</h3>
+            <p class="feature-desc">Request warehouse stock or program funding for local distribution.</p>
+          </div>
+          <div class="feature-card" id="request">
+            <div class="feature-icon-box">R</div>
+            <h3 class="feature-title">Receivers</h3>
+            <p class="feature-desc">Request financial support or items with supporting documents.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon-box">A</div>
+            <h3 class="feature-title">Admins</h3>
+            <p class="feature-desc">Verify users, manage inventory, and approve relief requests.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Success Stories -->
+    <section class="stories-section" id="stories">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Success Stories</h2>
+          <p>Real impact from our community of donors and partners.</p>
+        </div>
+        <div class="testimonial-grid">
+          <article class="testimonial-card">
+            <div class="testimonial-avatar">RK</div>
+            <p class="testimonial-quote">"I donated winter blankets and could see exactly which NGO received them. That transparency builds real trust."</p>
+            <p class="testimonial-author">Rajesh Kumar</p>
+            <p class="testimonial-role">Donor · Pune</p>
+          </article>
+          <article class="testimonial-card">
+            <div class="testimonial-avatar">SK</div>
+            <p class="testimonial-quote">"Our foundation received medical kits within 48 hours. The verification process was smooth and professional."</p>
+            <p class="testimonial-author">Sunita Deshmukh</p>
+            <p class="testimonial-role">NGO Partner</p>
+          </article>
+          <article class="testimonial-card">
+            <div class="testimonial-avatar">AM</div>
+            <p class="testimonial-quote">"I requested rent assistance and received support after document verification. Dignified and respectful process."</p>
+            <p class="testimonial-author">Amit Mehta</p>
+            <p class="testimonial-role">Receiver</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="about-section" id="about">
+      <div class="container about-grid">
+        <div>
+          <div class="section-heading" style="text-align:left;margin:0 0 1.5rem;">
+            <h2>About Aja Abayahastham</h2>
+            <p>We bridge the gap between generosity and necessity with verified logistics, transparent fund tracking, and compassionate support for communities in need.</p>
+          </div>
+          <button type="button" class="btn-hero-primary" onclick="startRegistration();">Join the Platform</button>
+        </div>
+        <div class="contact-card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;">Our Mission</h3>
+          <ul style="color:var(--color-text-secondary);font-size:0.9rem;line-height:1.8;padding-left:1.25rem;">
+            <li>End-to-end donation tracking</li>
+            <li>Verified NGO &amp; receiver onboarding</li>
+            <li>Secure document handling</li>
+            <li>Admin-audited financial ledger</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact-section" id="contact">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Contact Us</h2>
+          <p>Questions about donating, partnering, or receiving support? We're here to help.</p>
+        </div>
+        <div class="contact-card" style="max-width:480px;margin:0 auto;text-align:center;">
+          <p style="color:var(--color-text-secondary);margin-bottom:1rem;">support@abhayahastam.org</p>
+          <p style="color:var(--color-text-secondary);margin-bottom:1.5rem;">+91 1800-XXX-XXXX · Mon–Sat 9am–6pm</p>
+          <button type="button" class="btn-secondary-blue" onclick="showView('login');">Sign in to your account</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Home page reports (shown when logged in) -->
+    <section id="home-analytics-section" class="home-analytics" style="display: none;">
+      <div class="container">
+        <div class="dash-card">
+          <div class="dash-card-title">Platform impact snapshot</div>
+
+          <div class="dash-metrics-grid">
+            <div class="metric-card">
+              <div class="metric-card-label">Monetary donations</div>
+              <div class="metric-card-value">$24,500</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-label">Items distributed</div>
+              <div class="metric-card-value">1,480</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-label">Requests fulfilled</div>
+              <div class="metric-card-value">18</div>
+            </div>
+          </div>
+
+          <div class="dash-sections-grid equal-cols">
+            <div class="chart-placeholder">
+              <span>Donation volume</span>
+            </div>
+            <div class="chart-placeholder chart-placeholder-alt">
+              <span>Distribution mix</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       VIEW: Unified Login Page
+       ========================================== -->
+  <main class="page-view" id="login-view">
+    <div class="auth-unified-page">
+      <button type="button" class="auth-back-home" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </button>
+      <div class="auth-bg-decor" aria-hidden="true">
+        <div class="auth-bg-blob auth-bg-blob--1"></div>
+        <div class="auth-bg-blob auth-bg-blob--2"></div>
+        <div class="auth-bg-grid"></div>
+      </div>
+
+      <div class="auth-layout">
+        <aside class="auth-hero-panel" aria-label="About Aja Abayahastham">
+          <div class="auth-hero-inner">
+            <div class="auth-brand-logo auth-brand-logo--hero" aria-hidden="true">
+              <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="28" cy="28" r="27" fill="url(#brandGrad)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <path d="M16 33c0-5 5-10 12-10s12 5 12 10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M20 26c-2-3-1.5-6.5 2.5-8.5 3-1.5 5.5-.5 6.5 2M36 26c2-3 1.5-6.5-2.5-8.5-3-1.5-5.5-.5-6.5 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                <path d="M28 16v5" stroke="#86EFAC" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="28" cy="13" r="3" fill="#16A34A"/>
+                <defs>
+                  <linearGradient id="brandGrad" x1="8" y1="8" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#2563EB"/>
+                    <stop offset="1" stop-color="#1E3A8A"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <p class="auth-hero-eyebrow">Non-Profit Relief Network</p>
+            <h2 class="auth-hero-title">Aja Abayahastham</h2>
+            <p class="auth-hero-tagline">Trust &amp; Transparency in Every Gift</p>
+            <p class="auth-hero-desc">
+              One secure portal connecting generous donors, verified NGOs, and communities in need — with full accountability at every step.
+            </p>
+            <ul class="auth-trust-list">
+              <li>
+                <span class="auth-trust-icon" aria-hidden="true">✓</span>
+                End-to-end donation tracking
+              </li>
+              <li>
+                <span class="auth-trust-icon" aria-hidden="true">✓</span>
+                Verified NGO &amp; receiver onboarding
+              </li>
+              <li>
+                <span class="auth-trust-icon" aria-hidden="true">✓</span>
+                Bank-grade secure authentication
+              </li>
+            </ul>
+            <div class="auth-impact-bar auth-impact-bar--panel" aria-label="Platform impact statistics">
+              <div class="auth-impact-item">
+                <span class="auth-impact-icon" aria-hidden="true">💝</span>
+                <span class="auth-impact-value">50k+</span>
+                <span class="auth-impact-label">Donations Processed</span>
+              </div>
+              <div class="auth-impact-item">
+                <span class="auth-impact-icon" aria-hidden="true">🏛</span>
+                <span class="auth-impact-value">300+</span>
+                <span class="auth-impact-label">Active NGOs</span>
+              </div>
+              <div class="auth-impact-item">
+                <span class="auth-impact-icon" aria-hidden="true">🌱</span>
+                <span class="auth-impact-value">1M+</span>
+                <span class="auth-impact-label">Lives Impacted</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="auth-main-column">
+      <div class="auth-unified-card login-card">
+        <div class="auth-card-accent" aria-hidden="true"></div>
+        <div
+          class="auth-tabs"
+          role="tablist"
+          aria-label="Select login role"
+          id="auth-tablist"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="auth-tab-donor"
+            class="auth-tab is-active"
+            aria-selected="true"
+            aria-controls="auth-tabpanel"
+            data-login-role="donor"
+          >
+            <span class="auth-tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </span>
+            <span class="auth-tab-label">Donor</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="auth-tab-ngo"
+            class="auth-tab"
+            aria-selected="false"
+            aria-controls="auth-tabpanel"
+            data-login-role="ngo"
+            tabindex="-1"
+          >
+            <span class="auth-tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+            </span>
+            <span class="auth-tab-label">NGO</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="auth-tab-receiver"
+            class="auth-tab"
+            aria-selected="false"
+            aria-controls="auth-tabpanel"
+            data-login-role="receiver"
+            tabindex="-1"
+          >
+            <span class="auth-tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="auth-tab-label">Receiver</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="auth-tab-admin"
+            class="auth-tab"
+            aria-selected="false"
+            aria-controls="auth-tabpanel"
+            data-login-role="admin"
+            tabindex="-1"
+          >
+            <span class="auth-tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <span class="auth-tab-label">Admin</span>
+          </button>
+        </div>
+
+        <div class="login-card-header auth-card-header">
+          <h1 class="login-title" id="auth-panel-title">Welcome back, Donor</h1>
+          <p class="login-subtitle" id="auth-panel-subtitle">Sign in to manage your contributions and track your impact.</p>
+        </div>
+
+        <div
+          role="tabpanel"
+          id="auth-tabpanel"
+          aria-labelledby="auth-tab-donor"
+        >
+          <form
+            class="login-form auth-login-form"
+            id="auth-login-form"
+            novalidate
+            onsubmit="handleLoginSubmit(event)"
+          >
+            <div class="auth-form-fields auth-fade-in" id="auth-form-fields">
+              <div class="form-group" id="auth-field-primary-wrap">
+                <label for="auth-primary-input" id="auth-primary-label">Email Address</label>
+                <div class="auth-input-wrap">
+                  <span class="auth-input-icon" id="auth-primary-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+                  </span>
+                  <input
+                    type="email"
+                    id="auth-primary-input"
+                    name="username"
+                    placeholder="you@example.com"
+                    required
+                    autocomplete="username"
+                    aria-describedby="auth-primary-error"
+                  >
+                </div>
+                <p class="auth-field-error" id="auth-primary-error" role="alert" hidden></p>
+              </div>
+
+              <div class="form-group" id="auth-field-password-wrap">
+                <label for="auth-password-input" id="auth-password-label">Password</label>
+                <div class="auth-input-wrap">
+                  <span class="auth-input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </span>
+                  <input
+                    type="password"
+                    id="auth-password-input"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                    aria-describedby="auth-password-error"
+                  >
+                </div>
+                <p class="auth-field-error" id="auth-password-error" role="alert" hidden></p>
+              </div>
+
+              <div class="form-group auth-field-optional" id="auth-field-mfa-wrap" hidden>
+                <label for="auth-mfa-input" id="auth-mfa-label">2FA Verification Code</label>
+                <div class="auth-input-wrap">
+                  <span class="auth-input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="auth-mfa-input"
+                    name="mfa"
+                    placeholder="Enter 6-digit MFA token"
+                    inputmode="numeric"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
+                    aria-describedby="auth-mfa-error"
+                  >
+                </div>
+                <p class="auth-field-error" id="auth-mfa-error" role="alert" hidden></p>
+              </div>
+            </div>
+
+            <a
+              href="#"
+              class="auth-help-desk"
+              id="auth-help-desk"
+              hidden
+              aria-label="Need help logging in? Chat with us on WhatsApp"
+            >
+              <span class="auth-help-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.89-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+              </span>
+              Need help logging in? Chat with us
+            </a>
+
+            <button type="submit" class="login-submit auth-submit-btn auth-btn-green" id="auth-submit-btn">
+              <span id="auth-submit-text">Secure Login to Abayahastham</span>
+              <svg class="auth-submit-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+
+            <p class="auth-admin-notice" id="auth-admin-notice" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+              Authorized Personnel Only. All access attempts are tracked and audited.
+            </p>
+          </form>
+
+          <nav class="auth-footer-links" id="auth-footer-links" aria-label="Login assistance links">
+            <!-- Populated dynamically by JavaScript -->
+          </nav>
+
+          <div class="login-demo">
+            <p class="login-demo-label">Quick demo — click to fill</p>
+            <div class="login-demo-chips">
+              <button type="button" class="demo-chip" onclick="fillCredentials('donor@gmail.com', 'donor')">Donor</button>
+              <button type="button" class="demo-chip" onclick="fillCredentials('ngo@ashakiran.org', 'ngo')">NGO</button>
+              <button type="button" class="demo-chip" onclick="fillCredentials('receiver@outlook.com', 'receiver')">Receiver</button>
+              <button type="button" class="demo-chip" onclick="fillCredentials('admin@abhayahastam.org', 'admin')">Admin</button>
+            </div>
+            <p class="login-demo-hint">Password for all demos: <code>password123</code></p>
+          </div>
+        </div>
+      </div>
+        </div><!-- /.auth-main-column -->
+      </div><!-- /.auth-layout -->
+
+      <aside class="auth-impact-bar auth-impact-bar--mobile" aria-label="Platform impact statistics">
+        <div class="auth-impact-item">
+          <span class="auth-impact-value">50k+</span>
+          <span class="auth-impact-label">Donations Processed</span>
+        </div>
+        <div class="auth-impact-divider" aria-hidden="true"></div>
+        <div class="auth-impact-item">
+          <span class="auth-impact-value">300+</span>
+          <span class="auth-impact-label">Active NGOs</span>
+        </div>
+        <div class="auth-impact-divider" aria-hidden="true"></div>
+        <div class="auth-impact-item">
+          <span class="auth-impact-value">1M+</span>
+          <span class="auth-impact-label">Lives Impacted</span>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ==========================================
+       VIEW: Role Selection (Registration Step 1)
+       ========================================== -->
+  <main class="page-view" id="register-role-view">
+    <div class="login-page">
+      <button type="button" class="auth-back-home auth-back-home--centered" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </button>
+      <div class="login-card role-select-card">
+        <div class="login-card-header">
+          <div class="login-mark" aria-hidden="true"></div>
+          <h1 class="login-title">Choose your role</h1>
+          <p class="login-subtitle">Select how you'll participate in the Give Away network</p>
+        </div>
+
+        <div class="role-select-grid" role="radiogroup" aria-label="Account role">
+          <button type="button" class="role-select-option" data-role="donor" onclick="selectRegistrationRole('donor')" aria-pressed="false">
+            <span class="role-select-icon role-icon-donor">D</span>
+            <span class="role-select-label">Donor</span>
+            <span class="role-select-desc">Give items or funds and track your impact.</span>
+          </button>
+          <button type="button" class="role-select-option" data-role="ngo" onclick="selectRegistrationRole('ngo')" aria-pressed="false">
+            <span class="role-select-icon role-icon-ngo">N</span>
+            <span class="role-select-label">NGO</span>
+            <span class="role-select-desc">Request warehouse stock or program funding.</span>
+          </button>
+          <button type="button" class="role-select-option" data-role="receiver" onclick="selectRegistrationRole('receiver')" aria-pressed="false">
+            <span class="role-select-icon role-icon-receiver">R</span>
+            <span class="role-select-label">Receiver</span>
+            <span class="role-select-desc">Request financial support with supporting documents.</span>
+          </button>
+        </div>
+
+        <button type="button" id="role-continue-btn" class="login-submit" disabled onclick="proceedToRegistration()">Continue</button>
+
+        <p class="login-footer-text">
+          Already have an account?
+          <span class="auth-switch-link" onclick="showView('login')">Sign in</span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       VIEW: Donor Registration (Step 2 — Donor only)
+       ========================================== -->
+  <main class="page-view" id="donor-register-view">
+    <div class="login-page donor-reg-page">
+      <button type="button" class="auth-back-home auth-back-home--centered" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </button>
+      <div class="login-card donor-reg-card">
+        <div class="login-card-header">
+          <div class="login-mark" aria-hidden="true"></div>
+          <h1 class="login-title">Create Donor Account</h1>
+          <p class="login-subtitle">Quick signup — verify email &amp; mobile, then start donating. KYC is optional later.</p>
+        </div>
+
+        <div class="reg-role-summary donor-role-summary">
+          <span class="reg-role-summary-label">Registering as</span>
+          <span class="badge badge-donor">Donor</span>
+          <button type="button" class="btn-text btn-sm reg-role-change" onclick="showView('register-role')">Change role</button>
+        </div>
+
+        <form class="login-form donor-reg-form donor-reg-modern" id="donor-reg-form" onsubmit="handleDonorRegistration(event)">
+
+          <span class="donor-reg-step-badge">Step 1 of 2 — Basic Account</span>
+
+          <div class="form-group">
+            <label for="donor-full-name">Full Name</label>
+            <input type="text" id="donor-full-name" placeholder="Enter your full name" autocomplete="name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="donor-email">Email Address</label>
+            <input type="email" id="donor-email" placeholder="you@example.com" autocomplete="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="donor-mobile">Mobile Number</label>
+            <input type="tel" id="donor-mobile" placeholder="+91 98765 43210" autocomplete="tel" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="donor-password">Password</label>
+              <input type="password" id="donor-password" placeholder="Min. 8 characters" autocomplete="new-password" required>
+            </div>
+            <div class="form-group">
+              <label for="donor-confirm-password">Confirm Password</label>
+              <input type="password" id="donor-confirm-password" placeholder="Re-enter password" autocomplete="new-password" required>
+            </div>
+          </div>
+
+          <div class="donor-reg-otp-block" id="donor-email-otp-block">
+            <div class="donor-reg-otp-head">
+              <span>Email OTP</span>
+              <span class="donor-reg-otp-status" id="donor-email-otp-status">Not verified</span>
+            </div>
+            <div class="donor-reg-otp-row">
+              <input type="text" id="donor-email-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm donor-otp-btn" onclick="sendDonorRegOtp('email')">Send</button>
+              <button type="button" class="btn-outline btn-sm donor-otp-btn" onclick="verifyDonorRegOtp('email')">Verify</button>
+            </div>
+          </div>
+
+          <div class="donor-reg-otp-block" id="donor-mobile-otp-block">
+            <div class="donor-reg-otp-head">
+              <span>Mobile OTP</span>
+              <span class="donor-reg-otp-status" id="donor-mobile-otp-status">Not verified</span>
+            </div>
+            <div class="donor-reg-otp-row">
+              <input type="text" id="donor-mobile-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm donor-otp-btn" onclick="sendDonorRegOtp('mobile')">Send</button>
+              <button type="button" class="btn-outline btn-sm donor-otp-btn" onclick="verifyDonorRegOtp('mobile')">Verify</button>
+            </div>
+          </div>
+
+          <label class="donor-terms-check" style="margin:1rem 0">
+            <input type="checkbox" id="donor-terms">
+            <span class="donor-terms-text">I accept the <a href="#" onclick="return false;">Terms &amp; Conditions</a></span>
+          </label>
+
+          <div class="ngo-reg-actions donor-reg-actions">
+            <button type="button" class="btn-outline" onclick="showView('register-role')">Back</button>
+            <button type="submit" class="login-submit donor-reg-submit">Create Donor Account</button>
+          </div>
+        </form>
+
+        <p class="login-footer-text">
+          Already have an account?
+          <span class="auth-switch-link" onclick="showView('login')">Sign in</span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       VIEW: Receiver Registration (Step 2 — Receiver only)
+       ========================================== -->
+  <main class="page-view" id="receiver-register-view">
+    <div class="login-page receiver-reg-page">
+      <button type="button" class="auth-back-home auth-back-home--centered" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </button>
+      <div class="login-card receiver-reg-card">
+        <div class="login-card-header">
+          <div class="login-mark" aria-hidden="true"></div>
+          <h1 class="login-title">Create Receiver Account</h1>
+          <p class="login-subtitle">Quick signup — no documents needed now. Apply for assistance from your dashboard.</p>
+        </div>
+
+        <div class="reg-role-summary">
+          <span class="reg-role-summary-label">Registering as</span>
+          <span class="badge badge-warning">Receiver</span>
+          <button type="button" class="btn-text btn-sm reg-role-change" onclick="showView('register-role')">Change role</button>
+        </div>
+
+        <form class="login-form receiver-reg-form receiver-reg-modern" id="receiver-reg-form" onsubmit="handleReceiverRegistration(event)">
+
+          <span class="receiver-reg-step-badge">Step 1 — Create Account</span>
+
+          <div class="form-group">
+            <label for="receiver-full-name">Full Name</label>
+            <input type="text" id="receiver-full-name" placeholder="Enter your full name" autocomplete="name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="receiver-email">Email Address</label>
+            <input type="email" id="receiver-email" placeholder="you@example.com" autocomplete="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="receiver-mobile">Mobile Number</label>
+            <input type="tel" id="receiver-mobile" placeholder="+91 98765 43210" autocomplete="tel" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="receiver-password">Password</label>
+              <input type="password" id="receiver-password" placeholder="Min. 8 characters" autocomplete="new-password" required>
+            </div>
+            <div class="form-group">
+              <label for="receiver-confirm-password">Confirm Password</label>
+              <input type="password" id="receiver-confirm-password" placeholder="Re-enter password" autocomplete="new-password" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="receiver-dob">Date of Birth</label>
+              <input type="date" id="receiver-dob" required>
+            </div>
+            <div class="form-group">
+              <label for="receiver-gender">Gender</label>
+              <select id="receiver-gender" required>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer-not">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="receiver-city">City</label>
+              <input type="text" id="receiver-city" placeholder="City" required>
+            </div>
+            <div class="form-group">
+              <label for="receiver-state">State</label>
+              <input type="text" id="receiver-state" placeholder="State" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="receiver-address">Address <span class="label-optional">(Optional)</span></label>
+            <textarea id="receiver-address" rows="2" placeholder="Street address, landmark"></textarea>
+          </div>
+
+          <div class="receiver-reg-otp-block" id="receiver-email-otp-block">
+            <div class="receiver-reg-otp-head">
+              <span>Email OTP</span>
+              <span class="receiver-reg-otp-status" id="receiver-email-otp-status">Not verified</span>
+            </div>
+            <div class="receiver-reg-otp-row">
+              <input type="text" id="receiver-email-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm receiver-otp-btn" onclick="sendReceiverRegOtp('email')">Send</button>
+              <button type="button" class="btn-outline btn-sm receiver-otp-btn" onclick="verifyReceiverRegOtp('email')">Verify</button>
+            </div>
+          </div>
+
+          <div class="receiver-reg-otp-block" id="receiver-mobile-otp-block">
+            <div class="receiver-reg-otp-head">
+              <span>Mobile OTP</span>
+              <span class="receiver-reg-otp-status" id="receiver-mobile-otp-status">Not verified</span>
+            </div>
+            <div class="receiver-reg-otp-row">
+              <input type="text" id="receiver-mobile-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm receiver-otp-btn" onclick="sendReceiverRegOtp('mobile')">Send</button>
+              <button type="button" class="btn-outline btn-sm receiver-otp-btn" onclick="verifyReceiverRegOtp('mobile')">Verify</button>
+            </div>
+          </div>
+
+          <label class="receiver-terms-check" style="margin:1rem 0">
+            <input type="checkbox" id="receiver-terms">
+            <span class="donor-terms-text">I accept the <a href="#" onclick="return false;">Terms &amp; Conditions</a></span>
+          </label>
+
+          <div class="ngo-reg-actions receiver-reg-actions">
+            <button type="button" class="btn-outline" onclick="showView('register-role')">Back</button>
+            <button type="submit" class="login-submit">Create Receiver Account</button>
+          </div>
+        </form>
+
+        <p class="login-footer-text">
+          Already have an account?
+          <span class="auth-switch-link" onclick="showView('login')">Sign in</span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       VIEW: NGO Registration (Step 2 — NGO only)
+       ========================================== -->
+  <main class="page-view" id="ngo-register-view">
+    <div class="login-page ngo-reg-page">
+      <button type="button" class="auth-back-home auth-back-home--centered" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </button>
+      <div class="login-card ngo-reg-card">
+        <div class="login-card-header">
+          <div class="login-mark" aria-hidden="true"></div>
+          <h1 class="login-title">Create NGO Account</h1>
+          <p class="login-subtitle">Quick signup — no documents needed now. Complete verification from your dashboard to unlock all features.</p>
+        </div>
+
+        <div class="reg-role-summary ngo-role-summary">
+          <span class="reg-role-summary-label">Registering as</span>
+          <span class="badge badge-ngo">NGO Partner</span>
+          <button type="button" class="btn-text btn-sm reg-role-change" onclick="showView('register-role')">Change role</button>
+        </div>
+
+        <form class="login-form ngo-reg-form ngo-reg-modern" id="ngo-reg-form" onsubmit="handleNgoRegistration(event)">
+
+          <span class="ngo-reg-step-badge">Step 1 — Create Account</span>
+
+          <div class="form-group">
+            <label for="ngo-org-name">Organization Name</label>
+            <input type="text" id="ngo-org-name" placeholder="e.g. Asha Kiran Foundation" autocomplete="organization" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-email">Organization Email</label>
+            <input type="email" id="ngo-email" placeholder="contact@yourngo.org" autocomplete="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-mobile">Mobile Number</label>
+            <input type="tel" id="ngo-mobile" placeholder="+91 98765 43210" autocomplete="tel" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-rep-name">Authorized Representative Name</label>
+            <input type="text" id="ngo-rep-name" placeholder="Full name of signatory" autocomplete="name" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ngo-password">Password</label>
+              <input type="password" id="ngo-password" placeholder="Min. 8 characters" autocomplete="new-password" required>
+            </div>
+            <div class="form-group">
+              <label for="ngo-confirm-password">Confirm Password</label>
+              <input type="password" id="ngo-confirm-password" placeholder="Re-enter password" autocomplete="new-password" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-org-type">Organization Type</label>
+            <select id="ngo-org-type" required>
+              <option value="">Select organization type</option>
+              <option value="Registered Trust">Registered Trust</option>
+              <option value="Society">Society</option>
+              <option value="Section 8 Company">Section 8 Company</option>
+              <option value="Religious Organization">Religious Organization</option>
+              <option value="Community Group">Community Group</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ngo-city">City</label>
+              <input type="text" id="ngo-city" placeholder="City" required>
+            </div>
+            <div class="form-group">
+              <label for="ngo-state">State</label>
+              <input type="text" id="ngo-state" placeholder="State" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-address">Office Address</label>
+            <textarea id="ngo-address" rows="2" placeholder="Street address, area, landmark" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="ngo-years">Years of Operation <span class="label-optional">(Optional)</span></label>
+            <input type="number" id="ngo-years" placeholder="e.g. 5" min="0" max="150">
+          </div>
+
+          <div class="ngo-reg-otp-block" id="ngo-email-otp-block">
+            <div class="ngo-reg-otp-head">
+              <span>Email OTP</span>
+              <span class="ngo-reg-otp-status" id="ngo-email-otp-status">Not verified</span>
+            </div>
+            <div class="ngo-reg-otp-row">
+              <input type="text" id="ngo-email-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm ngo-otp-btn" onclick="sendNgoRegOtp('email')">Send</button>
+              <button type="button" class="btn-outline btn-sm ngo-otp-btn" onclick="verifyNgoRegOtp('email')">Verify</button>
+            </div>
+          </div>
+
+          <div class="ngo-reg-otp-block" id="ngo-mobile-otp-block">
+            <div class="ngo-reg-otp-head">
+              <span>Mobile OTP</span>
+              <span class="ngo-reg-otp-status" id="ngo-mobile-otp-status">Not verified</span>
+            </div>
+            <div class="ngo-reg-otp-row">
+              <input type="text" id="ngo-mobile-otp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+              <button type="button" class="btn-outline btn-sm ngo-otp-btn" onclick="sendNgoRegOtp('mobile')">Send</button>
+              <button type="button" class="btn-outline btn-sm ngo-otp-btn" onclick="verifyNgoRegOtp('mobile')">Verify</button>
+            </div>
+          </div>
+
+          <label class="ngo-terms-check" style="margin:1rem 0">
+            <input type="checkbox" id="ngo-terms">
+            <span class="donor-terms-text">I accept the <a href="#" onclick="return false;">Terms &amp; Conditions</a></span>
+          </label>
+
+          <div class="ngo-reg-actions">
+            <button type="button" class="btn-outline" onclick="showView('register-role')">Back</button>
+            <button type="submit" class="login-submit ngo-reg-submit">Create NGO Account</button>
+          </div>
+        </form>
+
+        <p class="login-footer-text">
+          Already have an account?
+          <span class="auth-switch-link" onclick="showView('login')">Sign in</span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       VIEW: Role-Based Dashboard Shell
+       ========================================== -->
+  <main class="page-view" id="dashboard-view">
+    <div class="dashboard-layout">
+      <aside class="dashboard-sidebar">
+        <div>
+          <p class="sidebar-label">Menu</p>
+          <ul class="sidebar-menu" id="dashboard-sidebar-nav"></ul>
+        </div>
+        <div class="sidebar-footer">
+          <p class="sidebar-footer-text">Give Away</p>
+          <p class="sidebar-footer-sub">Aja Abayahastham Platform</p>
+        </div>
+      </aside>
+
+      <div class="dashboard-main-wrap">
+        <div class="dashboard-topbar">
+          <div class="dashboard-search">
+            <span class="dashboard-search-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input type="search" placeholder="Search donations, requests…" aria-label="Search dashboard">
+          </div>
+          <div class="dashboard-topbar-actions">
+            <button type="button" class="nav-icon-btn" id="dashboard-notify-btn" aria-label="Notifications" title="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
+            <button type="button" class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
+            </button>
+          </div>
+        </div>
+        <section class="dashboard-content" id="dashboard-dynamic-content"></section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       Global Footer
+       ========================================== -->
+  <footer class="main-footer">
+    <div class="container footer-grid">
+      <div>
+        <div class="footer-brand">Give Away</div>
+        <p class="footer-about">
+          Aja Abayahastham — connecting generosity with necessity through verified donations, transparent fund tracking, and compassionate relief.
+        </p>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook">f</a>
+          <a href="#" aria-label="Twitter">𝕏</a>
+          <a href="#" aria-label="LinkedIn">in</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer-heading">For Donors</h4>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link" onclick="handleFooterAction('donate'); return false;">Donate Items</a></li>
+          <li><a href="#" class="footer-link" onclick="handleFooterAction('donate'); return false;">Donate Money</a></li>
+          <li><a href="#" class="footer-link" onclick="scrollToLandingSection('donate'); return false;">Categories</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="footer-heading">For Partners</h4>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link" onclick="handleFooterAction('ngo'); return false;">NGO Registration</a></li>
+          <li><a href="#" class="footer-link" onclick="handleFooterAction('receiver'); return false;">Request Support</a></li>
+          <li><a href="#" class="footer-link" onclick="scrollToLandingSection('ngos'); return false;">Our NGOs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="footer-heading">Platform</h4>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link" onclick="scrollToLandingSection('about'); return false;">About</a></li>
+          <li><a href="#" class="footer-link" onclick="scrollToLandingSection('contact'); return false;">Contact</a></li>
+          <li><a href="#" class="footer-link">FAQ</a></li>
+          <li><a href="#" class="footer-link">Privacy Policy</a></li>
+          <li><a href="#" class="footer-link">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© 2026 Aja Abayahastham · Give Away Platform</span>
+      <span>Built with trust &amp; transparency</span>
+    </div>
+  </footer>
+
+  <!-- Role auth prompt modal (Donate / Request / NGOs) -->
+  <div class="role-auth-modal" id="role-auth-modal" hidden aria-hidden="true">
+    <div class="role-auth-backdrop" onclick="closeRoleAuthModal()"></div>
+    <div class="role-auth-dialog" role="dialog" aria-modal="true" aria-labelledby="role-auth-title">
+      <button type="button" class="role-auth-close" onclick="closeRoleAuthModal()" aria-label="Close">&times;</button>
+      <div class="role-auth-icon" id="role-auth-icon" aria-hidden="true">💚</div>
+      <h2 class="role-auth-title" id="role-auth-title">Continue as Donor</h2>
+      <p class="role-auth-desc" id="role-auth-desc">Sign in or create an account to donate items and funds on Give Away.</p>
+      <div class="role-auth-actions">
+        <button type="button" class="role-auth-btn role-auth-btn--primary" id="role-auth-register-btn" onclick="confirmRoleRegister()">Create Account</button>
+        <button type="button" class="role-auth-btn role-auth-btn--secondary" id="role-auth-login-btn" onclick="confirmRoleLogin()">Sign In</button>
+      </div>
+      <p class="role-auth-footnote" id="role-auth-footnote">New here? Registration takes only a few minutes.</p>
+    </div>
+  </div>
+
+  <div id="donor-toast-root" class="donor-toast-root" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="app.js"></script>
+  <script src="donor-module.js"></script>
+  <script src="receiver-module.js"></script>
+  <script src="ngo-module.js"></script>
+</body>
+</html>

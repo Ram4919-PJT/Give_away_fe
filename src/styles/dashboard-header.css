@@ -1,0 +1,21 @@
+/* Dashboard header — final overrides (loads after button-system) */
+
+.dash-header .dash-header__menu-btn,
+.dash-header .dash-header__icon-btn,
+.dash-header .dash-header__profile-trigger,
+.dash-header .dash-header__dropdown-item {
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+.dash-header .dash-header__menu-btn:hover,
+.dash-header .dash-header__icon-btn:hover,
+.dash-header .dash-header__profile-trigger:hover,
+.dash-header .dash-header__dropdown-item:hover {
+  transform: none !important;
+}
+
+.dash-header .dash-header__profile-name,
+.dash-header .dash-header__verified {
+  pointer-events: none;
+}

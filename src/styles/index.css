@@ -1,0 +1,178 @@
+@import './tailwind.css';
+@import '../../legacy/styles.css';
+@import '../../legacy/theme-redesign.css';
+@import '../../legacy/donor-module.css';
+@import '../../legacy/receiver-module.css';
+@import './receiver-enhancements.css';
+@import './receiver-apply-flow.css';
+@import './receiver-applications.css';
+@import './login-enhancements.css';
+@import './demo-accounts.css';
+@import './register-enhancements.css';
+@import './dashboard-enhancements.css';
+@import './button-system.css';
+@import './dashboard-header.css';
+@import './donor-enhancements.css';
+@import '../../legacy/ngo-module.css';
+@import './ngo-enhancements.css';
+@import './ngo-dashboard.css';
+@import './ngo-request-donations.css';
+@import './ngo-financial-assistance.css';
+@import './ngo-inventory.css';
+@import './ngo-beneficiaries.css';
+@import './ngo-reports.css';
+@import './ngo-profile.css';
+@import './ngo-settings.css';
+@import './donor-settings.css';
+@import './donor-profile.css';
+@import './receiver-profile.css';
+@import './receiver-settings.css';
+@import './landing-enhancements.css';
+@import './mobile-home-mockup.css';
+@import './admin-enhancements.css';
+@import './admin-dashboard.css';
+@import './admin-modules.css';
+@import './admin-verification-queue.css';
+@import './admin-fund-dashboard.css';
+@import './admin-reports-dashboard.css';
+@import './admin-logs-dashboard.css';
+@import './admin-settings-dashboard.css';
+
+.app-shell--mobile-mockup {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: transparent;
+}
+
+
+.app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-route {
+  flex: 1;
+  animation: fadeInUp 0.35s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* React-specific polish */
+.nav-center-links .nav-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.demo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin: 0;
+}
+
+.cta-banner-section {
+  padding: 3rem 0;
+  background: linear-gradient(135deg, #ECFDF5 0%, #EFF6FF 100%);
+}
+
+.cta-banner { text-align: center; }
+.cta-banner h2 { margin-bottom: 0.5rem; }
+
+.footer-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-link:hover { color: #22C55E; }
+
+/* Footer text links — never look like primary green buttons */
+.main-footer button.footer-link,
+button.footer-link {
+  display: inline !important;
+  align-items: unset !important;
+  justify-content: unset !important;
+  width: auto !important;
+  min-height: unset !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+  color: #94A3B8 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  white-space: normal !important;
+  cursor: pointer;
+  transition: color 0.2s ease !important;
+}
+
+.main-footer button.footer-link:hover,
+button.footer-link:hover {
+  color: #FFFFFF !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  text-decoration: none;
+}
+
+.main-footer .footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.main-footer .footer-heading {
+  color: #E2E8F0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.9rem;
+}
+
+.donor-stats-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.donor-stats-grid--5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .donor-stats-grid--5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .donor-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .donor-stats-grid--5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

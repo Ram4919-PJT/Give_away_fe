@@ -10,7 +10,7 @@ import { useApp, isRoleVerified } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
 import {
   DONOR_ITEM_CATEGORIES, DONOR_MONEY_PRESETS, DONOR_PURPOSES,
-  DONOR_PAYMENT_METHODS, IMPACT_STORIES
+  DONOR_PAYMENT_METHODS
 } from '../../data/donorConstants';
 import {
   DONATE_ITEM_CATEGORY_CONFIG,
@@ -32,6 +32,8 @@ import {
   getDonorInitials, statusBadgeClass, formatCurrency, maskBeneficiaryName,
   DONOR_JOURNEY_STEPS
 } from '../../utils/donorHelpers';
+import { buildMoneyDonationNotes, buildItemDonationNotes } from '../../api/mappers';
+import { buildDonorVerificationNotes } from '../../utils/donorVerification';
 
 function NotifIcon({ name, size = 18 }) {
   const key = name.split('-').map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('');
@@ -108,11 +110,12 @@ function DonorPageHeader({ title, subtitle, children }) {
 }
 
 export function DonorDashboard() {
-  const { currentUser, donations, notifications } = useApp();
+  const { currentUser, donations, notifications, platformLoading, markNotificationReadRemote } = useApp();
   const navigate = useNavigate();
   const stats = getDonorStats(donations, currentUser);
   const recent = getDonorDonations(donations, currentUser).slice(0, 4);
   const unread = notifications.filter((n) => !n.read).length;
+  const loading = platformLoading && !donations.length;
 
   return (
     <div className="donor-page donor-module page-route">
@@ -132,18 +135,27 @@ export function DonorDashboard() {
       </div>
 
       <div className="donor-stats-grid donor-stats-grid--4">
-        {[
-          [Gift, 'Total Donations', stats.totalDonations, 'green'],
-          [Package, 'Items Donated', stats.itemsDonated, 'orange'],
-          [IndianRupee, 'Money Donated', formatCurrency(stats.moneyDonated), 'blue'],
-          [Users, 'Lives Impacted', stats.livesImpacted, 'purple']
-        ].map(([Icon, label, val, color]) => (
-          <article key={label} className="donor-stat-card donor-stat-card--modern">
-            <div className={`donor-stat-icon donor-stat-icon--${color}`}><Icon size={20} /></div>
-            <p className="donor-stat-label">{label}</p>
-            <p className="donor-stat-value">{val}</p>
-          </article>
-        ))}
+        {loading ? (
+          [1, 2, 3, 4].map((i) => (
+            <article key={i} className="donor-stat-card donor-stat-card--modern donor-stat-card--loading">
+              <p className="donor-stat-label">Loading…</p>
+              <p className="donor-stat-value">—</p>
+            </article>
+          ))
+        ) : (
+          [
+            [Gift, 'Total Donations', stats.totalDonations, 'green'],
+            [Package, 'Items Donated', stats.itemsDonated, 'orange'],
+            [IndianRupee, 'Money Donated', formatCurrency(stats.moneyDonated), 'blue'],
+            [CheckCircle, 'Completed', stats.completedDonations, 'purple']
+          ].map(([Icon, label, val, color]) => (
+            <article key={label} className="donor-stat-card donor-stat-card--modern">
+              <div className={`donor-stat-icon donor-stat-icon--${color}`}><Icon size={20} /></div>
+              <p className="donor-stat-label">{label}</p>
+              <p className="donor-stat-value">{val}</p>
+            </article>
+          ))
+        )}
       </div>
 
       <div className="donor-section">
@@ -186,7 +198,9 @@ export function DonorDashboard() {
             <h2 className="donor-section-title">Recent Donations</h2>
             <button type="button" className="donor-section-link" onClick={() => navigate('/dashboard/donor-my-donations')}>View all</button>
           </div>
-          {recent.length ? (
+          {loading ? (
+            <DonorEmpty emoji="⏳" title="Loading donations…" desc="Fetching your contribution history from the server." />
+          ) : recent.length ? (
             <div className="donor-activity-list">
               {recent.map((d) => (
                 <div key={d.id} className="donor-activity-item donor-activity-item--modern">
@@ -210,10 +224,19 @@ export function DonorDashboard() {
               View all {unread > 0 && `(${unread})`}
             </button>
           </div>
-          {notifications.slice(0, 3).map((n) => (
-            <div key={n.id} className={`donor-notif-item donor-notif-item--compact ${n.read ? '' : 'unread'}`}>
+          {notifications.length === 0 ? (
+            <DonorEmpty icon={Bell} title="No notifications" desc={platformLoading ? 'Loading notifications…' : "You're all caught up."} />
+          ) : notifications.slice(0, 3).map((n) => (
+            <div
+              key={n.id}
+              role="button"
+              tabIndex={0}
+              className={`donor-notif-item donor-notif-item--compact ${n.read ? '' : 'unread'}`}
+              onClick={() => markNotificationReadRemote('notifications', n.id)}
+              onKeyDown={(e) => e.key === 'Enter' && markNotificationReadRemote('notifications', n.id)}
+            >
               <NotifIcon name={n.icon} />
-              <div><strong>{n.title}</strong><p>{n.message}</p></div>
+              <div><strong>{n.title}</strong><p>{n.message}</p><span>{n.time}</span></div>
             </div>
           ))}
         </div>
@@ -233,16 +256,17 @@ export function DonorDashboard() {
 }
 
 export function DonorDonateMoney() {
-  const { dispatch, currentUser } = useApp();
+  const { submitDonation, currentUser } = useApp();
   const { showToast } = useToast();
   const [amount, setAmount] = useState('');
   const [purpose, setPurpose] = useState('General Donation');
   const [payment, setPayment] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const isCheckout = payment !== null;
   const numericAmount = Number(amount) || 0;
 
-  const submitDonation = () => {
+  const submitDonationHandler = async () => {
     if (!numericAmount || numericAmount <= 0) {
       showToast('Enter a valid amount.', 'error');
       return;
@@ -251,28 +275,22 @@ export function DonorDonateMoney() {
       showToast('Select a payment method.', 'error');
       return;
     }
-    dispatch({
-      type: 'ADD_DONATION',
-      payload: {
-        id: 'don-' + Date.now(),
-        donor: currentUser.name,
-        donorEmail: currentUser.email,
-        type: 'Financial',
+    setSubmitting(true);
+    try {
+      await submitDonation({
+        donation_type: 'MONEY',
         amount: numericAmount,
-        fund: purpose,
-        purpose,
-        details: `${formatCurrency(amount)} donation for ${purpose}`,
-        date: new Date().toISOString().split('T')[0],
-        status: 'Pending Verification',
-        paymentMethod: payment,
-        livesImpacted: 0,
-        familiesHelped: 0,
-        usage: null
-      }
-    });
-    showToast('Donation submitted! Thank you for supporting AJA Abayahastham.', 'success');
-    setAmount('');
-    setPayment(null);
+        currency: 'INR',
+        notes: buildMoneyDonationNotes({ purpose, amount: numericAmount }),
+      });
+      showToast('Donation submitted! Thank you for supporting AJA Abayahastham.', 'success');
+      setAmount('');
+      setPayment(null);
+    } catch (err) {
+      showToast(err.message || 'Could not submit donation.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -298,8 +316,8 @@ export function DonorDonateMoney() {
             <PaymentModule
               payment={payment}
               amount={numericAmount}
-              onPay={submitDonation}
-              disabled={!numericAmount}
+              onPay={submitDonationHandler}
+              disabled={!numericAmount || submitting}
             />
           </CheckoutRight>
         )}
@@ -311,9 +329,10 @@ export function DonorDonateMoney() {
 }
 
 export function DonorDonateItem() {
-  const { dispatch, currentUser } = useApp();
+  const { submitDonation, currentUser } = useApp();
   const { showToast } = useToast();
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [selections, setSelections] = useState({});
   const [description, setDescription] = useState('');
@@ -351,42 +370,35 @@ export function DonorDonateItem() {
     });
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!categoryComplete || !description || !pickupAddress || !pickupDate) {
       showToast('Complete all required fields.', 'error');
       return;
     }
-    dispatch({
-      type: 'ADD_DONATION',
-      payload: {
-        id: 'don-' + Date.now(),
-        donor: currentUser.name,
-        donorEmail: currentUser.email,
-        type: 'Items',
-        amount: null,
-        fund: categoryLabel,
-        category: categoryLabel,
-        purpose: categoryConfig?.label,
-        details: description,
-        date: new Date().toISOString().split('T')[0],
-        status: 'Pending Pickup',
-        pickupAddress,
-        pickupDate,
-        imageCount: images.length,
-        livesImpacted: 0,
-        familiesHelped: 0,
-        usage: null,
-        itemSelections: { categoryId, ...selections }
-      }
-    });
-    showToast('Item donation submitted! AJA will confirm pickup.', 'success');
-    setStep(1);
-    setCategoryId('');
-    setSelections({});
-    setDescription('');
-    setPickupAddress('');
-    setPickupDate('');
-    setImages([]);
+    setSubmitting(true);
+    try {
+      await submitDonation({
+        donation_type: 'ITEM',
+        notes: buildItemDonationNotes({
+          category: categoryLabel,
+          description,
+          pickupAddress,
+          pickupDate,
+        }),
+      });
+      showToast('Item donation submitted! AJA will confirm pickup.', 'success');
+      setStep(1);
+      setCategoryId('');
+      setSelections({});
+      setDescription('');
+      setPickupAddress('');
+      setPickupDate('');
+      setImages([]);
+    } catch (err) {
+      showToast(err.message || 'Could not submit donation.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -490,7 +502,9 @@ export function DonorDonateItem() {
               Next <ArrowRight size={16} />
             </button>
           ) : (
-            <button type="button" className="login-submit" onClick={submit}>Submit Donation</button>
+            <button type="button" className="login-submit" onClick={submit} disabled={submitting}>
+              {submitting ? 'Submitting…' : 'Submit Donation'}
+            </button>
           )}
         </div>
       </div>
@@ -499,14 +513,16 @@ export function DonorDonateItem() {
 }
 
 export function DonorMyDonations() {
-  const { donations, currentUser } = useApp();
+  const { donations, currentUser, platformLoading } = useApp();
   const navigate = useNavigate();
   const list = getDonorDonations(donations, currentUser);
 
   return (
     <div className="donor-page donor-module page-route">
       <DonorPageHeader title="My Donations" subtitle="Track every contribution to AJA Abayahastham and its journey." />
-      {list.length ? (
+      {platformLoading && !list.length ? (
+        <DonorEmpty icon={Gift} title="Loading donations…" desc="Fetching your contribution history." />
+      ) : list.length ? (
         <div className="donor-donation-list">
           {list.map((d) => (
             <article key={d.id} className="donor-donation-card donor-donation-card--modern">
@@ -588,7 +604,6 @@ export function DonorDonationDetail() {
 export function DonorMyImpact() {
   const { donations, currentUser } = useApp();
   const navigate = useNavigate();
-  const { showToast } = useToast();
 
   if (!isRoleVerified(currentUser)) {
     return (
@@ -613,13 +628,12 @@ export function DonorMyImpact() {
     <div className="donor-page donor-module page-route">
       <DonorPageHeader title="My Impact" subtitle="See how your generosity through AJA Abayahastham creates real change." />
 
-      <div className="donor-stats-grid donor-stats-grid--5">
+      <div className="donor-stats-grid donor-stats-grid--4">
         {[
           [Gift, 'Total Donations', stats.totalDonations],
           [Package, 'Items Donated', stats.itemsDonated],
           [IndianRupee, 'Money Donated', formatCurrency(stats.moneyDonated)],
-          [Users, 'Lives Impacted', stats.livesImpacted],
-          [Heart, 'Families Helped', stats.familiesHelped]
+          [CheckCircle, 'Completed', stats.completedDonations]
         ].map(([Icon, label, val]) => (
           <article key={label} className="donor-stat-card donor-stat-card--impact">
             <Icon size={18} />
@@ -646,57 +660,25 @@ export function DonorMyImpact() {
         )}
       </div>
 
-      {completed.some((d) => d.beneficiary) && (
+      {completed.length > 0 && (
         <div className="donor-section">
-          <h2 className="donor-section-title">Beneficiary Information</h2>
-          {completed.filter((d) => d.beneficiary).map((d) => (
-            <div key={d.id} className="donor-beneficiary-card">
-              <div className="donor-beneficiary-grid">
-                <div><label>Name</label><p>{d.beneficiary.displayName}</p></div>
-                <div><label>City</label><p>{d.beneficiary.city}</p></div>
-                <div><label>Assistance Type</label><p>{d.beneficiary.assistanceType}</p></div>
-                <div><label>Status</label><p>{d.beneficiary.status}</p></div>
+          <h2 className="donor-section-title">Completed Donations</h2>
+          <p className="donor-section-subtitle">Donations that reached beneficiaries through AJA Abayahastham.</p>
+          {completed.map((d) => (
+            <article key={d.id} className="donor-impact-history-card">
+              <div className="donor-impact-history-head">
+                <strong>{d.id}</strong>
+                <span className={`donor-status-badge ${statusBadgeClass(d.status)}`}>{normalizeDonorStatus(d.status)}</span>
               </div>
-            </div>
+              <p>{d.type} · {d.type === 'Financial' ? formatCurrency(d.amount) : d.category || d.fund} · {d.date}</p>
+            </article>
           ))}
         </div>
       )}
 
-      <div className="donor-section">
-        <h2 className="donor-section-title">Impact Stories</h2>
-        <div className="donor-stories-grid">
-          {IMPACT_STORIES.map((s) => (
-            <article key={s.id} className="donor-story-card">
-              <div className="donor-story-body">
-                <span className="donor-story-emoji">{s.emoji}</span>
-                <span className="donor-story-cat">{s.category}</span>
-                <h3>{s.title}</h3>
-                <p>{s.summary}</p>
-              </div>
-              <footer className="donor-story-footer">
-                <span className="donor-story-date">{s.date}</span>
-                <button type="button" className="donor-story-read-more" onClick={() => showToast('Full story coming soon.', 'info')}>
-                  Read More
-                </button>
-              </footer>
-            </article>
-          ))}
-        </div>
-      </div>
-
-      <div className="donor-section">
-        <h2 className="donor-section-title">Delivery Confirmation</h2>
-        <div className="donor-delivery-placeholder">
-          <ImageIcon size={32} />
-          <p>Delivery photos are shown only when consent has been provided.</p>
-          <div className="donor-delivery-illus">📦 ✨ 🤝</div>
-        </div>
-      </div>
-
-      <div className="donor-download-section">
-        <button type="button" className="btn-outline" onClick={() => showToast('Receipt downloaded.', 'success')}><Download size={16} /> Download Donation Receipt</button>
-        <button type="button" className="btn-outline" onClick={() => showToast('Impact report downloaded.', 'success')}><FileText size={16} /> Download Impact Report</button>
-      </div>
+      {completed.length === 0 && (
+        <DonorEmpty emoji="✨" title="No completed donations yet" desc="When your donations are delivered, they will appear here." actionLabel="Donate Now" onAction={() => navigate('/dashboard/donor-donate-money')} />
+      )}
 
       <div className="donor-thank-you-banner">
         <Star size={28} />
@@ -708,7 +690,7 @@ export function DonorMyImpact() {
 }
 
 export function DonorNotifications() {
-  const { notifications, dispatch } = useApp();
+  const { notifications, markNotificationReadRemote, platformLoading } = useApp();
   const groups = [
     { key: 'today', label: 'Today' },
     { key: 'yesterday', label: 'Yesterday' },
@@ -720,7 +702,7 @@ export function DonorNotifications() {
     <div className="donor-page donor-module page-route">
       <DonorPageHeader title="Notifications" subtitle="Stay updated on your donations and verification status." />
       {!hasAny ? (
-        <DonorEmpty icon={Bell} title="No Notifications" desc="You're all caught up! Updates about your donations will appear here." />
+        <DonorEmpty icon={Bell} title="No Notifications" desc={platformLoading ? 'Loading notifications…' : "You're all caught up! Updates about your donations will appear here."} />
       ) : groups.map(({ key, label }) => {
         const items = notifications.filter((n) => n.group === key);
         if (!items.length) return null;
@@ -728,7 +710,7 @@ export function DonorNotifications() {
           <div key={key} className="donor-notif-group">
             <h3 className="donor-notif-group-label">{label}</h3>
             {items.map((n) => (
-              <div key={n.id} className={`donor-notif-item ${n.read ? '' : 'unread'}`} onClick={() => dispatch({ type: 'MARK_NOTIFICATION_READ', payload: { listKey: 'notifications', id: n.id } })}>
+              <div key={n.id} className={`donor-notif-item ${n.read ? '' : 'unread'}`} onClick={() => markNotificationReadRemote('notifications', n.id)}>
                 <NotifIcon name={n.icon} />
                 <div><strong>{n.title}</strong><p>{n.message}</p><span>{n.time}</span></div>
               </div>
@@ -748,12 +730,71 @@ export function DonorSettings() {
   return <DonorSettingsPage />;
 }
 
-export function DonorVerify() {
-  const { dispatch, currentUser } = useApp();
-  const { showToast } = useToast();
+function DonorDocUpload({ name, required, uploaded, setUploaded }) {
+  const key = name.toLowerCase().replace(/\s+/g, '');
+  return (
+    <label className={`donor-doc-upload ${uploaded[key] ? 'uploaded' : ''}`}>
+      <input type="file" accept=".pdf,.jpg,.png" onChange={() => setUploaded((u) => ({ ...u, [key]: true }))} />
+      <div className="donor-doc-icon">{uploaded[key] ? <CheckCircle size={20} /> : <Upload size={20} />}</div>
+      <div><strong>{name}{required ? ' *' : ' (Optional)'}</strong><span>{uploaded[key] ? 'Uploaded ✓' : 'Drag & drop or click'}</span></div>
+    </label>
+  );
+}
+
+function DonorVerifyForm({ onSubmit, submitting, submitLabel = 'Submit Verification' }) {
   const [uploaded, setUploaded] = useState({});
 
+  return (
+    <div className="donor-form-card donor-form-card--modern">
+      <h3>Required Documents</h3>
+      <div className="donor-doc-grid"><DonorDocUpload name="Aadhaar Card" required uploaded={uploaded} setUploaded={setUploaded} /></div>
+      <h3>Optional Documents</h3>
+      <div className="donor-doc-grid">
+        <DonorDocUpload name="Selfie" uploaded={uploaded} setUploaded={setUploaded} />
+        <DonorDocUpload name="Address Proof" uploaded={uploaded} setUploaded={setUploaded} />
+      </div>
+      <div className="donor-form-actions">
+        <button
+          type="button"
+          className="login-submit"
+          disabled={submitting}
+          onClick={() => onSubmit(uploaded)}
+        >
+          {submitting ? 'Submitting…' : submitLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function DonorVerify() {
+  const { currentUser, submitDonorVerification } = useApp();
+  const { showToast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
   const status = currentUser?.verified === true ? 'verified' : currentUser?.verified === 'pending' ? 'pending' : currentUser?.verified === 'rejected' ? 'rejected' : 'none';
+
+  const handleSubmit = async (uploaded) => {
+    if (!uploaded.aadhaarcard) {
+      showToast('Aadhaar Card is required.', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitDonorVerification({
+        notes: buildDonorVerificationNotes({
+          'Aadhaar Card': uploaded.aadhaarcard,
+          Selfie: uploaded.selfie,
+          'Address Proof': uploaded.addressproof,
+        }),
+      });
+      showToast('Verification submitted for admin review.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not submit verification.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (status === 'verified') {
     return (
@@ -772,50 +813,38 @@ export function DonorVerify() {
         <div className="donor-verify-status donor-verify-status--pending">
           <Clock size={32} />
           <h2>Verification Pending</h2>
-          <p>Our team is reviewing your documents. You'll be notified once approved.</p>
+          <p>Our team is reviewing your documents. You&apos;ll be notified once approved.</p>
         </div>
       </div>
     );
   }
 
-  const submit = () => {
-    if (!uploaded.aadhaar) { showToast('Aadhaar Card is required.', 'error'); return; }
-    dispatch({ type: 'UPDATE_USER', payload: { verified: 'pending' } });
-    showToast('Verification submitted for admin review.', 'success');
-  };
-
-  const DocUpload = ({ name, required }) => (
-    <label className={`donor-doc-upload ${uploaded[name] ? 'uploaded' : ''}`}>
-      <input type="file" accept=".pdf,.jpg,.png" onChange={() => setUploaded((u) => ({ ...u, [name]: true }))} />
-      <div className="donor-doc-icon">{uploaded[name] ? <CheckCircle size={20} /> : <Upload size={20} />}</div>
-      <div><strong>{name}{required ? ' *' : ' (Optional)'}</strong><span>{uploaded[name] ? 'Uploaded ✓' : 'Drag & drop or click'}</span></div>
-    </label>
-  );
-
   return (
     <div className="donor-page donor-module page-route">
-      <DonorPageHeader title="Become a Verified Donor" subtitle="Optional verification after registration — unlock trust benefits." />
-      <div className="donor-verify-benefits">
-        <h3>Benefits</h3>
-        <ul>
-          <li><ShieldCheck size={16} /> Verified Badge on your profile</li>
-          <li><Star size={16} /> Higher trust with AJA Abayahastham</li>
-          <li><Truck size={16} /> Faster donation approval</li>
-          <li><BarChart3 size={16} /> Increased transparency in impact reports</li>
-        </ul>
-      </div>
-      <div className="donor-form-card donor-form-card--modern">
-        <h3>Required Documents</h3>
-        <div className="donor-doc-grid"><DocUpload name="Aadhaar Card" required /></div>
-        <h3>Optional Documents</h3>
-        <div className="donor-doc-grid">
-          <DocUpload name="Selfie" />
-          <DocUpload name="Address Proof" />
+      <DonorPageHeader
+        title={status === 'rejected' ? 'Resubmit Verification' : 'Become a Verified Donor'}
+        subtitle={status === 'rejected'
+          ? (currentUser?.rejectionReason || 'Please upload your documents again.')
+          : 'Optional verification after registration — unlock trust benefits.'}
+      />
+      {status === 'rejected' && (
+        <div className="donor-verify-status donor-verify-status--rejected" style={{ marginBottom: '1rem' }}>
+          <X size={24} />
+          <p>Previous submission was rejected. You can resubmit below.</p>
         </div>
-        <div className="donor-form-actions">
-          <button type="button" className="login-submit" onClick={submit}>Submit Verification</button>
+      )}
+      {status !== 'rejected' && (
+        <div className="donor-verify-benefits">
+          <h3>Benefits</h3>
+          <ul>
+            <li><ShieldCheck size={16} /> Verified Badge on your profile</li>
+            <li><Star size={16} /> Higher trust with AJA Abayahastham</li>
+            <li><Truck size={16} /> Faster donation approval</li>
+            <li><BarChart3 size={16} /> Increased transparency in impact reports</li>
+          </ul>
         </div>
-      </div>
+      )}
+      <DonorVerifyForm onSubmit={handleSubmit} submitting={submitting} submitLabel={status === 'rejected' ? 'Resubmit Verification' : 'Submit Verification'} />
     </div>
   );
 }

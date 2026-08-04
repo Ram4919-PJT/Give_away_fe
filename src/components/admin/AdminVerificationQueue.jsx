@@ -7,7 +7,7 @@ import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
 import { NGO_REJECTION_REASONS, CUSTOM_REJECTION_OPTION } from '../../data/adminConstants';
 import {
-  VERIFICATION_TABS, buildVerificationMockData, getVerificationSummary,
+  VERIFICATION_TABS, buildVerificationListFromApi, getVerificationSummary,
   getStatusCounts, ASSISTANCE_TYPES
 } from '../../data/adminVerificationMockData';
 
@@ -271,11 +271,10 @@ function ActionPanel({ item, onApprove, onReject, showToast }) {
 }
 
 export default function AdminVerificationQueue() {
-  const { verifications, verifyEntity, rejectEntity } = useApp();
+  const { verifications, verifyEntity, rejectEntity, platformLoading, refreshPlatformData } = useApp();
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Donor');
-  const [localItems, setLocalItems] = useState(() => buildVerificationMockData(verifications));
+  const [localItems, setLocalItems] = useState(() => buildVerificationListFromApi(verifications));
   const [selectedId, setSelectedId] = useState(null);
   const [sidebarFilter, setSidebarFilter] = useState('Pending');
   const [search, setSearch] = useState('');
@@ -284,13 +283,12 @@ export default function AdminVerificationQueue() {
   const [checklists, setChecklists] = useState({});
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 450);
-    return () => clearTimeout(t);
-  }, []);
+    setLocalItems(buildVerificationListFromApi(verifications));
+  }, [verifications]);
 
   useEffect(() => {
-    setLocalItems(buildVerificationMockData(verifications));
-  }, [verifications]);
+    refreshPlatformData('super-admin');
+  }, [refreshPlatformData]);
 
   const tabItems = useMemo(() => localItems.filter((i) => i.type === activeTab), [localItems, activeTab]);
 
@@ -354,7 +352,7 @@ export default function AdminVerificationQueue() {
 
   const selectedChecklist = selected ? (checklists[selected.id] || selected.checklist) : [];
 
-  if (loading) {
+  if (platformLoading && !localItems.length) {
     return (
       <div className="vq-page page-route">
         <VerifySkeleton />

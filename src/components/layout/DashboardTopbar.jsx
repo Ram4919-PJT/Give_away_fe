@@ -46,7 +46,8 @@ export default function DashboardTopbar({
   menuOpen,
   notifCount,
   onToggleMenu,
-  onLogout
+  onLogout,
+  logoutLoading = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,12 +201,13 @@ export default function DashboardTopbar({
                 <div className="dash-header__dropdown-divider" />
                 <button
                   type="button"
-                  className="dash-header__dropdown-item dash-header__dropdown-item--danger"
+                  className={`dash-header__dropdown-item dash-header__dropdown-item--danger${logoutLoading ? ' is-loading' : ''}`}
                   role="menuitem"
                   onClick={onLogout}
+                  disabled={logoutLoading}
                 >
                   <LogOut size={16} />
-                  Logout
+                  {logoutLoading ? 'Signing out…' : 'Logout'}
                 </button>
               </div>
             )}

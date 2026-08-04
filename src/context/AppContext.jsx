@@ -21,6 +21,9 @@ import {
   getStoredRefreshToken
 } from '../api/iamClient';
 import { mapIamUser, mapRoleToIam, normalizeMobileInput } from '../utils/roleMap';
+import { fetchPlatformData, coreClient, notificationsClient } from '../api/platformApi';
+import { mapDonationFromApi, mapVerificationFromApi, mapAssistanceRequestFromApi, buildAssistanceRequestPayload } from '../api/mappers';
+import { deriveDonorVerificationFromRequests, deriveReceiverVerificationFromRequests } from '../utils/donorVerification';
 
 const AppContext = createContext(null);
 
@@ -32,28 +35,6 @@ function getDefaultTab(role) {
     receiver: 'receiver-dashboard'
   };
   return map[role] || 'donor-dashboard';
-}
-
-const RECEIVER_APPS_STORAGE_KEY = 'giveaway-receiver-applications';
-
-function loadReceiverApplications(defaultApps) {
-  if (typeof window === 'undefined') return defaultApps;
-  try {
-    const raw = localStorage.getItem(RECEIVER_APPS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* ignore */
-  }
-  return defaultApps;
-}
-
-function persistReceiverApplications(apps) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(RECEIVER_APPS_STORAGE_KEY, JSON.stringify(apps));
-  } catch {
-    /* ignore */
-  }
 }
 
 function makeNotification(id, title, message, icon = 'bell') {
@@ -84,6 +65,10 @@ function appReducer(state, action) {
       return { ...state, editingDonationId: action.payload };
     case 'PATCH_DATA':
       return { ...state, ...action.payload };
+    case 'SET_PLATFORM_DATA':
+      return { ...state, ...action.payload };
+    case 'SET_PLATFORM_LOADING':
+      return { ...state, platformLoading: action.payload };
     case 'ADD_DONATION':
       return { ...state, donations: [action.payload, ...state.donations] };
     case 'UPDATE_DONATION':
@@ -334,16 +319,15 @@ function appReducer(state, action) {
       };
     case 'ADD_NGO_REQUEST':
       return { ...state, ngoRequests: [action.payload, ...(state.ngoRequests || [])] };
-    case 'ADD_RECEIVER_APPLICATION': {
-      const receiverApplications = [action.payload, ...(state.receiverApplications || [])];
-      persistReceiverApplications(receiverApplications);
-      return { ...state, receiverApplications };
-    }
+    case 'ADD_RECEIVER_APPLICATION':
+      return {
+        ...state,
+        receiverApplications: [action.payload, ...(state.receiverApplications || [])]
+      };
     case 'UPDATE_RECEIVER_APPLICATION': {
       const receiverApplications = (state.receiverApplications || []).map((a) =>
         a.id === action.payload.id ? { ...a, ...action.payload } : a
       );
-      persistReceiverApplications(receiverApplications);
       return { ...state, receiverApplications };
     }
     case 'MARK_NOTIFICATION_READ': {
@@ -360,17 +344,42 @@ function appReducer(state, action) {
 
 export function AppProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [state, dispatch] = useReducer(appReducer, null, () => {
     const base = createInitialState();
     return {
       currentUser: null,
       currentTab: 'overview',
       editingDonationId: null,
+      platformLoading: false,
       ...base,
       verifications: loadVerifications(base.verifications),
-      receiverApplications: loadReceiverApplications(base.receiverApplications)
+      receiverApplications: []
     };
   });
+
+  const refreshPlatformData = useCallback(async (role) => {
+    if (!role) return;
+    dispatch({ type: 'SET_PLATFORM_LOADING', payload: true });
+    try {
+      const data = await fetchPlatformData(role);
+      dispatch({ type: 'SET_PLATFORM_DATA', payload: data });
+      if (role === 'donor') {
+        const verificationPatch = deriveDonorVerificationFromRequests(data.verifications);
+        if (verificationPatch) {
+          dispatch({ type: 'UPDATE_USER', payload: verificationPatch });
+        }
+      }
+      if (role === 'receiver') {
+        const verificationPatch = deriveReceiverVerificationFromRequests(data.verifications);
+        if (verificationPatch) {
+          dispatch({ type: 'UPDATE_USER', payload: verificationPatch });
+        }
+      }
+    } finally {
+      dispatch({ type: 'SET_PLATFORM_LOADING', payload: false });
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -393,7 +402,9 @@ export function AppProvider({ children }) {
         }
         const me = await getMe(token);
         if (!cancelled) {
-          dispatch({ type: 'LOGIN', payload: mapIamUser(me) });
+          const user = mapIamUser(me);
+          dispatch({ type: 'LOGIN', payload: user });
+          await refreshPlatformData(user.role);
         }
       } catch {
         clearTokens();
@@ -404,7 +415,7 @@ export function AppProvider({ children }) {
 
     restoreSession();
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshPlatformData]);
 
   useEffect(() => {
     const onStorage = (e) => {
@@ -445,8 +456,9 @@ export function AppProvider({ children }) {
     const me = await getMe(tokens.access_token);
     const user = mapIamUser(me);
     dispatch({ type: 'LOGIN', payload: user });
+    await refreshPlatformData(user.role);
     return user;
-  }, []);
+  }, [refreshPlatformData]);
 
   const register = useCallback(async ({ role, full_name, email, mobile, password, profile = {} }) => {
     const role_name = mapRoleToIam(role);
@@ -470,14 +482,23 @@ export function AppProvider({ children }) {
     const me = await getMe(tokens.access_token);
     const user = { ...mapIamUser(me), ...profile };
     dispatch({ type: 'LOGIN', payload: user });
+    await refreshPlatformData(user.role);
     return user;
-  }, []);
+  }, [refreshPlatformData]);
 
   const logout = useCallback(async () => {
-    const refreshToken = getStoredRefreshToken();
-    clearTokens();
-    dispatch({ type: 'LOGOUT' });
-    await iamLogout(refreshToken);
+    setLogoutLoading(true);
+    try {
+      const refreshToken = getStoredRefreshToken();
+      await iamLogout(refreshToken);
+    } catch {
+      /* revoke best-effort */
+    } finally {
+      clearTokens();
+      dispatch({ type: 'LOGOUT' });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      setLogoutLoading(false);
+    }
   }, []);
 
   const verifyEntity = useCallback((id, approvedBy) => {
@@ -495,20 +516,87 @@ export function AppProvider({ children }) {
     dispatch({ type: 'UPSERT_NGO_VERIFICATION', payload });
   }, []);
 
+  const submitDonation = useCallback(async (payload) => {
+    const created = await coreClient.createDonation(payload);
+    const mapped = mapDonationFromApi(created);
+    dispatch({ type: 'ADD_DONATION', payload: mapped });
+    await refreshPlatformData(state.currentUser?.role);
+    return mapped;
+  }, [refreshPlatformData, state.currentUser?.role]);
+
+  const submitDonorVerification = useCallback(async ({ notes }) => {
+    let profile = await coreClient.getMyDonorProfile().catch(() => null);
+    if (!profile) {
+      profile = await coreClient.createDonorProfile({
+        organization_name: state.currentUser?.name || undefined,
+      });
+    }
+    const created = await coreClient.createVerificationRequest({
+      entity_type: 'DONOR',
+      entity_id: profile.donor_profile_id,
+      notes: notes || 'Donor verification request',
+    });
+    const mapped = mapVerificationFromApi(created);
+    dispatch({ type: 'ADD_VERIFICATION', payload: mapped });
+    dispatch({ type: 'UPDATE_USER', payload: { verified: 'pending', verificationStatus: 'submitted' } });
+    await refreshPlatformData('donor');
+    return mapped;
+  }, [refreshPlatformData, state.currentUser?.name]);
+
+  const loadDonorProfile = useCallback(async () => {
+    const profile = await coreClient.getMyDonorProfile().catch(() => null);
+    if (profile) {
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: {
+          donorProfileId: profile.donor_profile_id,
+          panNumber: profile.pan_number,
+          profileStatus: profile.status,
+        },
+      });
+    }
+    return profile;
+  }, []);
+
+  const submitAssistanceRequest = useCallback(async ({ categoryId, categoryTitle, form }) => {
+    const payload = buildAssistanceRequestPayload({ categoryId, categoryTitle, form });
+    const created = await coreClient.createAssistanceRequest(payload);
+    const mapped = mapAssistanceRequestFromApi(created);
+    dispatch({ type: 'ADD_RECEIVER_APPLICATION', payload: mapped });
+    await refreshPlatformData(state.currentUser?.role);
+    return mapped;
+  }, [refreshPlatformData, state.currentUser?.role]);
+
+  const markNotificationReadRemote = useCallback(async (listKey, id) => {
+    dispatch({ type: 'MARK_NOTIFICATION_READ', payload: { listKey, id } });
+    try {
+      await notificationsClient.markNotificationRead(id);
+    } catch {
+      /* optimistic UI */
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       ...state,
       authLoading,
+      logoutLoading,
       dispatch,
       login,
       register,
       logout,
+      refreshPlatformData,
+      submitDonation,
+      submitDonorVerification,
+      loadDonorProfile,
+      submitAssistanceRequest,
+      markNotificationReadRemote,
       verifyEntity,
       rejectEntity,
       submitNgoVerification,
       setTab: (tab) => dispatch({ type: 'SET_TAB', payload: tab })
     }),
-    [state, authLoading, login, register, logout, verifyEntity, rejectEntity, submitNgoVerification]
+    [state, authLoading, logoutLoading, login, register, logout, refreshPlatformData, submitDonation, submitDonorVerification, loadDonorProfile, submitAssistanceRequest, markNotificationReadRemote, verifyEntity, rejectEntity, submitNgoVerification]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

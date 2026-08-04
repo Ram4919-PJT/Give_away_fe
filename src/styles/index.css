@@ -36,6 +36,7 @@
 @import './admin-reports-dashboard.css';
 @import './admin-logs-dashboard.css';
 @import './admin-settings-dashboard.css';
+@import './logout-ui.css';
 
 .app-shell--mobile-mockup {
   min-height: 100vh;
@@ -173,5 +174,68 @@ button.footer-link:hover {
   }
   .donor-stats-grid--5 {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Production responsive polish */
+@media (max-width: 1024px) {
+  .vq-layout {
+    grid-template-columns: 280px 1fr;
+  }
+  .vq-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-page-header h1,
+  .donor-page-header h1,
+  .vq-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .donor-quick-actions--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .donate-money-page .checkout-layout,
+  .donate-item-page .donate-item-shell {
+    flex-direction: column;
+  }
+
+  .vq-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .vq-sidebar {
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .vq-header__stats {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .vq-header-stat {
+    min-width: calc(50% - 0.5rem);
+  }
+
+  .vq-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .donor-quick-actions--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .donor-stats-grid,
+  .donor-stats-grid--4,
+  .donor-stats-grid--5 {
+    grid-template-columns: 1fr;
   }
 }

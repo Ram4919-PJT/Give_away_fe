@@ -2,10 +2,17 @@ import { DONOR_JOURNEY_STEPS, DONOR_STATUS_MAP } from '../data/donorConstants';
 
 export function getDonorDonations(donations, user) {
   if (!user) return [];
-  const key = (user.email || '').toLowerCase();
-  return (donations || []).filter(
-    (d) => (d.donorEmail || '').toLowerCase() === key || d.donor === user.name
+  const emailKey = (user.email || '').toLowerCase();
+  const userId = user.id || user.user_id || user.userId;
+  const list = donations || [];
+  const matched = list.filter(
+    (d) =>
+      (d.donorEmail || '').toLowerCase() === emailKey
+      || d.donor === user.name
+      || (userId && (d.donor_user_id === userId || d.donorEmail === userId))
   );
+  if (!matched.length && list.length && user.role === 'donor') return list;
+  return matched;
 }
 
 export function normalizeDonorStatus(status) {
@@ -22,8 +29,7 @@ export function getDonorStats(donations, user) {
     totalDonations: list.length,
     itemsDonated: items.length,
     moneyDonated: financial.reduce((s, d) => s + (d.amount || 0), 0),
-    livesImpacted: list.reduce((s, d) => s + (d.livesImpacted || (normalizeDonorStatus(d.status) === 'Completed' ? 2 : 0)), 0) || completed.length * 2,
-    familiesHelped: list.reduce((s, d) => s + (d.familiesHelped || (normalizeDonorStatus(d.status) === 'Completed' ? 1 : 0)), 0) || completed.length
+    completedDonations: completed.length,
   };
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Clock, Pencil, Settings, KeyRound, Gift, IndianRupee,
@@ -66,9 +66,20 @@ function computeCompletion(user, form) {
 }
 
 export default function DonorProfilePage() {
-  const { currentUser, donations, dispatch } = useApp();
+  const { currentUser, donations, dispatch, loadDonorProfile } = useApp();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadDonorProfile()
+      .catch(() => null)
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [loadDonorProfile]);
 
   const list = useMemo(
     () => getDonorDonations(donations, currentUser),
@@ -205,6 +216,20 @@ export default function DonorProfilePage() {
                 <Calendar size={14} aria-hidden="true" />
                 Member since {formatDate(currentUser?.memberSince)}
               </span>
+              {profileLoading ? (
+                <span><Clock size={14} aria-hidden="true" /> Loading profile…</span>
+              ) : currentUser?.profileStatus ? (
+                <span>
+                  <BadgeCheck size={14} aria-hidden="true" />
+                  Profile {String(currentUser.profileStatus).toLowerCase()}
+                </span>
+              ) : null}
+              {currentUser?.panNumber ? (
+                <span>
+                  <Briefcase size={14} aria-hidden="true" />
+                  PAN {currentUser.panNumber}
+                </span>
+              ) : null}
               <span>
                 <Gift size={14} aria-hidden="true" />
                 Last donation {lastDonation ? formatDate(lastDonation.date) : '—'}

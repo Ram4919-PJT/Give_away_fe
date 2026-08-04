@@ -11,6 +11,7 @@ import {
 } from '../utils/ngoVerificationStore';
 import {
   login as iamLogin,
+  register as iamRegister,
   logout as iamLogout,
   refresh as iamRefresh,
   getMe,
@@ -19,7 +20,7 @@ import {
   getStoredAccessToken,
   getStoredRefreshToken
 } from '../api/iamClient';
-import { mapIamUser } from '../utils/roleMap';
+import { mapIamUser, mapRoleToIam, normalizeMobileInput } from '../utils/roleMap';
 
 const AppContext = createContext(null);
 
@@ -447,6 +448,31 @@ export function AppProvider({ children }) {
     return user;
   }, []);
 
+  const register = useCallback(async ({ role, full_name, email, mobile, password, profile = {} }) => {
+    const role_name = mapRoleToIam(role);
+    if (!role_name) {
+      throw new Error('Invalid role for registration.');
+    }
+
+    const normalizedMobile = normalizeMobileInput(mobile);
+    if (normalizedMobile.length !== 10) {
+      throw new Error('Enter a valid 10-digit mobile number.');
+    }
+
+    const tokens = await iamRegister({
+      full_name,
+      email,
+      mobile: normalizedMobile,
+      password,
+      role_name
+    });
+    saveTokens(tokens);
+    const me = await getMe(tokens.access_token);
+    const user = { ...mapIamUser(me), ...profile };
+    dispatch({ type: 'LOGIN', payload: user });
+    return user;
+  }, []);
+
   const logout = useCallback(async () => {
     const refreshToken = getStoredRefreshToken();
     clearTokens();
@@ -475,13 +501,14 @@ export function AppProvider({ children }) {
       authLoading,
       dispatch,
       login,
+      register,
       logout,
       verifyEntity,
       rejectEntity,
       submitNgoVerification,
       setTab: (tab) => dispatch({ type: 'SET_TAB', payload: tab })
     }),
-    [state, authLoading, login, logout, verifyEntity, rejectEntity, submitNgoVerification]
+    [state, authLoading, login, register, logout, verifyEntity, rejectEntity, submitNgoVerification]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

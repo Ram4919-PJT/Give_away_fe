@@ -5,6 +5,44 @@ const IAM_TO_FRONTEND = {
   SUPER_ADMIN: 'super-admin'
 };
 
+const FRONTEND_TO_IAM = {
+  donor: 'DONOR',
+  receiver: 'RECEIVER',
+  ngo: 'NGO'
+};
+
+export const REGISTER_ROLES = [
+  {
+    key: 'donor',
+    title: 'I want to donate',
+    desc: 'Give items or money and track your impact.',
+    icon: 'heart'
+  },
+  {
+    key: 'receiver',
+    title: 'I need support',
+    desc: 'Apply for financial assistance when you need help.',
+    icon: 'people'
+  },
+  {
+    key: 'ngo',
+    title: 'I represent an NGO',
+    desc: 'Partner with us to coordinate relief programs.',
+    icon: 'business'
+  }
+];
+
+export function mapRoleToIam(role) {
+  return FRONTEND_TO_IAM[role] || null;
+}
+
+export function normalizeMobileInput(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  if (digits.length === 10) return digits;
+  return digits.slice(-10);
+}
+
 const FRONTEND_TO_DASHBOARD = {
   donor: '/dashboard/donor-dashboard',
   receiver: '/dashboard/receiver-dashboard',

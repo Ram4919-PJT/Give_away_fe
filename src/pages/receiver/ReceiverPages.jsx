@@ -19,8 +19,8 @@ import ReceiverProfilePage from '../../components/receiver/ReceiverProfilePage';
 import ReceiverSettingsPage from '../../components/receiver/ReceiverSettingsPage';
 import {
   getReceiverApps, getReceiverStats, statusBadgeClass, getTimelineIndex, getInitials,
-  buildReceiverApplicationFromFlow
 } from '../../utils/receiverHelpers';
+import { APPLY_ASSISTANCE_CATEGORIES } from '../../data/receiverApplyConfig';
 import { formatCurrency } from '../../utils/donorHelpers';
 
 function NotifIcon({ name, size = 18 }) {
@@ -65,7 +65,7 @@ function ApplicationTimeline({ status, compact }) {
 }
 
 export function ReceiverDashboard() {
-  const { currentUser, receiverApplications, receiverNotifications } = useApp();
+  const { currentUser, receiverApplications, receiverNotifications, platformLoading, markNotificationReadRemote } = useApp();
   const navigate = useNavigate();
   const apps = getReceiverApps(receiverApplications, currentUser);
   const stats = getReceiverStats(apps);
@@ -223,10 +223,13 @@ export function ReceiverDashboard() {
 
 /* --- Apply (wireframe guided flow) --- */
 export function ReceiverApply() {
-  const { dispatch, currentUser, receiverNotifications } = useApp();
+  const { currentUser, submitAssistanceRequest } = useApp();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedApp, setSubmittedApp] = useState(null);
 
   if (!isRoleVerified(currentUser)) {
     return (
@@ -243,28 +246,23 @@ export function ReceiverApply() {
     );
   }
 
-  const handleSubmitted = ({ categoryId, form }) => {
-    const application = buildReceiverApplicationFromFlow({ categoryId, form, user: currentUser });
-    dispatch({ type: 'ADD_RECEIVER_APPLICATION', payload: application });
-    dispatch({
-      type: 'PATCH_DATA',
-      payload: {
-        receiverNotifications: [
-          {
-            id: `rn-${Date.now()}`,
-            title: 'Application Submitted',
-            message: `${application.id} has been submitted to AJA Abayahastham for review.`,
-            time: 'Just now',
-            group: 'today',
-            read: false,
-            icon: 'file-check'
-          },
-          ...(receiverNotifications || [])
-        ]
-      }
-    });
-    setModalOpen(false);
-    setSuccessOpen(true);
+  const handleSubmitted = async ({ categoryId, form }) => {
+    const cat = APPLY_ASSISTANCE_CATEGORIES.find((c) => c.id === categoryId);
+    setSubmitting(true);
+    try {
+      const application = await submitAssistanceRequest({
+        categoryId,
+        categoryTitle: cat?.title,
+        form,
+      });
+      setSubmittedApp(application);
+      setModalOpen(false);
+      setSuccessOpen(true);
+    } catch (err) {
+      showToast(err.message || 'Could not submit application.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

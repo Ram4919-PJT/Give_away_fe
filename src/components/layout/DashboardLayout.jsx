@@ -9,6 +9,7 @@ import {
 import { useToast } from '../ui/Toast';
 import { getInitials } from '../../utils/receiverHelpers';
 import DashboardTopbar from './DashboardTopbar';
+import { useLogoutAction } from '../../hooks/useLogoutAction';
 
 function SidebarIcon({ name, size = 18 }) {
   const key = name.split('-').map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('');
@@ -68,7 +69,8 @@ function SidebarUserCard({ user }) {
 }
 
 export default function DashboardLayout() {
-  const { currentUser, logout, authLoading, notifications, receiverNotifications, ngoNotifications, adminNotifications } = useApp();
+  const { currentUser, authLoading, notifications, receiverNotifications, ngoNotifications, adminNotifications, logoutLoading } = useApp();
+  const { requestLogout, LogoutDialog } = useLogoutAction({ redirectTo: '/' });
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
@@ -126,10 +128,9 @@ export default function DashboardLayout() {
     setMenuOpen(false);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
+  const handleLogout = () => {
     setMenuOpen(false);
+    requestLogout();
   };
 
   const toggleTheme = () => {
@@ -209,11 +210,12 @@ export default function DashboardLayout() {
           </button>
           <button
             type="button"
-            className="sidebar-link sidebar-logout-btn"
+            className={`sidebar-link sidebar-logout-btn${logoutLoading ? ' is-loading' : ''}`}
             onClick={handleLogout}
+            disabled={logoutLoading}
           >
             <span className="sidebar-icon"><LucideIcons.LogOut size={18} /></span>
-            Logout
+            {logoutLoading ? 'Signing out…' : 'Logout'}
           </button>
         </div>
       </aside>
@@ -223,6 +225,7 @@ export default function DashboardLayout() {
 
   return (
     <div className={layoutClass}>
+      {LogoutDialog}
       <DashboardTopbar
         user={currentUser}
         role={role}
@@ -232,6 +235,7 @@ export default function DashboardLayout() {
         notifCount={notifCount}
         onToggleMenu={() => setMenuOpen((o) => !o)}
         onLogout={handleLogout}
+        logoutLoading={logoutLoading}
       />
 
       {drawerLayer}

@@ -3,9 +3,11 @@ import { useApp, getRoleDisplayName } from '../../context/AppContext';
 import { useState } from 'react';
 import RoleAuthModal from '../ui/RoleAuthModal';
 import { ROLE_AUTH_CONFIG } from '../../data/constants';
+import { useLogoutAction } from '../../hooks/useLogoutAction';
 
 export default function AppHeader() {
-  const { currentUser, logout, setTab } = useApp();
+  const { currentUser, setTab, logoutLoading } = useApp();
+  const { requestLogout, LogoutDialog } = useLogoutAction({ redirectTo: '/' });
   const navigate = useNavigate();
   const location = useLocation();
   const [roleModal, setRoleModal] = useState(null);
@@ -46,6 +48,7 @@ export default function AppHeader() {
 
   return (
     <>
+      {LogoutDialog}
       <header className="main-header">
         <div className="logo-section" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} role="button" tabIndex={0}>
           <div className="logo-mark" aria-hidden="true">
@@ -106,8 +109,8 @@ export default function AppHeader() {
                   <div className="nav-user-name">{currentUser.name}</div>
                   <div className="nav-user-role">{getRoleDisplayName(currentUser.role)}</div>
                 </div>
-                <button type="button" className="btn-ghost btn-sm" onClick={() => { logout(); navigate('/'); }}>
-                  Logout
+                <button type="button" className="btn-ghost btn-sm" onClick={requestLogout} disabled={logoutLoading}>
+                  {logoutLoading ? 'Signing out…' : 'Logout'}
                 </button>
               </li>
             </ul>

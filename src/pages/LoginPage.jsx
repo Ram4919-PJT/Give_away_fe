@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../components/ui/Toast';
+import { useLogoutAction } from '../hooks/useLogoutAction';
 import { getDashboardPathForRole } from '../utils/roleMap';
 
 function BrandLogo() {
@@ -27,7 +28,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { login, logout, currentUser, authLoading } = useApp();
+  const { login, currentUser, authLoading, logoutLoading } = useApp();
+  const { requestLogout, LogoutDialog } = useLogoutAction({ redirectTo: '/login', skipConfirm: true });
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -66,6 +68,7 @@ export default function LoginPage() {
 
   return (
     <main className="page-view active-view page-route" id="login-view">
+      {LogoutDialog}
       <div className="auth-unified-page">
         <Link to="/" className="auth-back-home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
@@ -188,12 +191,10 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="login-session-signout"
-                    onClick={async () => {
-                      await logout();
-                      showToast('Signed out.', 'info');
-                    }}
+                    onClick={requestLogout}
+                    disabled={logoutLoading}
                   >
-                    Sign out
+                    {logoutLoading ? 'Signing out…' : 'Sign out'}
                   </button>
                 </div>
               )}

@@ -203,33 +203,41 @@ export function buildVerificationMockData(contextVerifications = []) {
 }
 
 function enrichFromContext(v) {
+  const initials = v.name?.split(' ').map((p) => p[0]).join('').slice(0, 2) || v.avatar || '?';
   return {
     id: v.id,
     type: v.type,
     name: v.name,
-    email: v.email,
-    phone: '+91 98765 00000',
-    avatar: v.name?.split(' ').map((p) => p[0]).join('').slice(0, 2) || '?',
+    email: v.email || '—',
+    phone: v.phone || '—',
+    avatar: initials,
     status: v.status,
     submitted: v.submitted,
     registrationDate: v.submitted,
     registrationId: v.registrationId,
     documents: v.documents?.length
       ? v.documents.map((d) => (typeof d === 'object' ? { ...d, uploadedAt: v.submitted } : DOC(d, d)))
-      : [DOC(v.doc || 'Document', v.doc || 'document.pdf')],
-    checklist: DEFAULT_CHECKLIST,
-    timeline: [{ date: v.submitted, event: 'Submitted' }],
-    notes: '',
-    reviewer: 'Unassigned'
+      : [],
+    checklist: v.checklist || DEFAULT_CHECKLIST,
+    timeline: v.timeline?.length ? v.timeline : [{ date: v.submitted, event: 'Submitted' }],
+    notes: v.notes || '',
+    reviewer: v.reviewer || 'Unassigned'
   };
+}
+
+/** Production list — API verifications only, no demo seed data */
+export function buildVerificationListFromApi(contextVerifications = []) {
+  return contextVerifications.map(enrichFromContext);
 }
 
 export function getVerificationSummary(items, type) {
   const list = items.filter((i) => i.type === type);
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = (d) => String(d || '').startsWith(today);
   return {
-    pending: list.filter((i) => i.status === 'Pending').length,
-    approvedToday: list.filter((i) => i.status === 'Verified').length > 0 ? 3 : 1,
-    rejectedToday: list.filter((i) => i.status === 'Rejected').length > 0 ? 1 : 0,
+    pending: list.filter((i) => i.status === 'Pending' || i.status === 'Under Review').length,
+    approvedToday: list.filter((i) => i.status === 'Verified' && isToday(i.reviewedAt || i.submitted)).length,
+    rejectedToday: list.filter((i) => i.status === 'Rejected' && isToday(i.reviewedAt || i.submitted)).length,
     total: list.length
   };
 }

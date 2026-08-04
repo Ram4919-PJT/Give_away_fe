@@ -2,44 +2,55 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
-import OtpBlock from '../../components/ui/OtpBlock';
+import { getDashboardPathForRole } from '../../utils/roleMap';
 
 export default function ReceiverRegisterPage() {
   const navigate = useNavigate();
-  const { dispatch } = useApp();
+  const { register } = useApp();
   const { showToast } = useToast();
-  const [emailOk, setEmailOk] = useState(false);
-  const [mobileOk, setMobileOk] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const password = fd.get('password');
     const confirm = fd.get('confirmPassword');
-    if (password.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
-    if (password !== confirm) { showToast('Passwords do not match.', 'error'); return; }
-    if (!emailOk || !mobileOk) { showToast('Verify email and mobile OTP.', 'error'); return; }
-    if (!fd.get('terms')) { showToast('Accept Terms & Conditions.', 'error'); return; }
+    if (password.length < 8) {
+      showToast('Password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (password !== confirm) {
+      showToast('Passwords do not match.', 'error');
+      return;
+    }
+    if (!fd.get('terms')) {
+      showToast('Accept Terms & Conditions.', 'error');
+      return;
+    }
 
-    dispatch({
-      type: 'LOGIN',
-      payload: {
-        name: fd.get('fullName'),
-        email: fd.get('email'),
-        mobile: fd.get('mobile'),
+    setSubmitting(true);
+    try {
+      const user = await register({
         role: 'receiver',
-        city: fd.get('city'),
-        state: fd.get('state'),
-        address: fd.get('address') || '',
-        dob: fd.get('dob'),
-        gender: fd.get('gender'),
-        verified: false,
-        status: 'Registered Receiver',
-        memberSince: new Date().toISOString().split('T')[0]
-      }
-    });
-    showToast('Receiver account created! Welcome to Give Away.', 'success');
-    navigate('/dashboard');
+        full_name: String(fd.get('fullName') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        mobile: String(fd.get('mobile') || ''),
+        password,
+        profile: {
+          city: String(fd.get('city') || '').trim(),
+          state: String(fd.get('state') || '').trim(),
+          address: String(fd.get('address') || '').trim(),
+          dob: fd.get('dob'),
+          gender: fd.get('gender')
+        }
+      });
+      showToast('Receiver account created! Welcome to Give Away.', 'success');
+      navigate(getDashboardPathForRole(user.role));
+    } catch (err) {
+      showToast(err.message || 'Registration failed.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -54,7 +65,7 @@ export default function ReceiverRegisterPage() {
             <div className="login-mark" aria-hidden="true" />
             <h1 className="login-title">Create Receiver Account</h1>
             <p className="login-subtitle">
-              Quick signup — no documents needed now. Apply for financial assistance from AJA Abayahastham after registration.
+              Sign up to apply for financial assistance from AJA Abayahastham after registration.
             </p>
           </div>
 
@@ -65,13 +76,12 @@ export default function ReceiverRegisterPage() {
           </div>
 
           <div className="receiver-reg-trust">
-            <span>✓ No documents at signup</span>
             <span>✓ AJA-reviewed applications</span>
             <span>✓ Dignified support process</span>
           </div>
 
           <form className="login-form receiver-reg-form receiver-reg-modern" onSubmit={handleSubmit}>
-            <span className="receiver-reg-step-badge">Step 1 — Create Account</span>
+            <span className="receiver-reg-step-badge">Create Account</span>
 
             <div className="form-group">
               <label htmlFor="receiver-full-name">Full Name</label>
@@ -85,7 +95,7 @@ export default function ReceiverRegisterPage() {
 
             <div className="form-group">
               <label htmlFor="receiver-mobile">Mobile Number</label>
-              <input id="receiver-mobile" name="mobile" type="tel" placeholder="+91 98765 43210" autoComplete="tel" required />
+              <input id="receiver-mobile" name="mobile" type="tel" placeholder="9876543210" autoComplete="tel" required />
             </div>
 
             <div className="form-row">
@@ -132,9 +142,6 @@ export default function ReceiverRegisterPage() {
               <textarea id="receiver-address" name="address" rows={2} placeholder="Street address, landmark" />
             </div>
 
-            <OtpBlock type="email" prefix="receiver" onVerified={setEmailOk} />
-            <OtpBlock type="mobile" prefix="receiver" onVerified={setMobileOk} />
-
             <label className="receiver-terms-check">
               <input type="checkbox" name="terms" />
               <span>I accept the <a href="#" onClick={(e) => e.preventDefault()}>Terms &amp; Conditions</a> of AJA Abayahastham</span>
@@ -142,12 +149,14 @@ export default function ReceiverRegisterPage() {
 
             <div className="ngo-reg-actions receiver-reg-actions">
               <Link to="/register" className="btn-outline">Back</Link>
-              <button type="submit" className="login-submit">Create Receiver Account</button>
+              <button type="submit" className="login-submit" disabled={submitting}>
+                {submitting ? 'Creating account…' : 'Create Receiver Account'}
+              </button>
             </div>
           </form>
 
           <p className="login-footer-text">
-            Already have an account? <Link to="/login?role=receiver" className="auth-switch-link">Sign in</Link>
+            Already have an account? <Link to="/login" className="auth-switch-link">Sign in</Link>
           </p>
         </div>
       </div>

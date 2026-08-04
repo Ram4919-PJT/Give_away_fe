@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
-import OtpBlock from '../../components/ui/OtpBlock';
 import { persistNgoProfile } from '../../utils/ngoVerificationStore';
+import { getDashboardPathForRole } from '../../utils/roleMap';
 
 const UNLOCK_FEATURES = [
   'Request Donations',
@@ -18,12 +18,11 @@ const UNLOCK_FEATURES = [
 
 export default function NgoRegisterPage() {
   const navigate = useNavigate();
-  const { dispatch } = useApp();
+  const { register } = useApp();
   const { showToast } = useToast();
-  const [emailOk, setEmailOk] = useState(false);
-  const [mobileOk, setMobileOk] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const password = fd.get('password');
@@ -38,20 +37,12 @@ export default function NgoRegisterPage() {
       showToast('Passwords do not match.', 'error');
       return;
     }
-    if (!emailOk || !mobileOk) {
-      showToast('Verify email and mobile OTP first (use any 6 digits).', 'error');
-      return;
-    }
     if (!fd.get('terms')) {
       showToast('Please accept the Terms & Conditions.', 'error');
       return;
     }
 
-    const user = {
-      name: fd.get('orgName'),
-      email,
-      mobile: fd.get('mobile'),
-      role: 'ngo',
+    const profile = {
       repName: fd.get('repName'),
       orgType: fd.get('orgType'),
       city: fd.get('city'),
@@ -59,24 +50,38 @@ export default function NgoRegisterPage() {
       address: fd.get('address'),
       verified: false,
       verificationStatus: 'registered',
-      status: 'Registered NGO',
-      memberSince: new Date().toISOString().split('T')[0]
+      status: 'Registered NGO'
     };
 
-    persistNgoProfile(email, {
-      verified: false,
-      verificationStatus: 'registered',
-      status: 'Registered NGO',
-      name: user.name,
-      repName: user.repName,
-      orgType: user.orgType,
-      city: user.city,
-      state: user.state
-    });
+    setSubmitting(true);
+    try {
+      const user = await register({
+        role: 'ngo',
+        full_name: String(fd.get('orgName') || '').trim(),
+        email,
+        mobile: String(fd.get('mobile') || ''),
+        password,
+        profile
+      });
 
-    dispatch({ type: 'LOGIN', payload: user });
-    showToast('NGO account created! Complete verification to unlock features.', 'success');
-    navigate('/dashboard');
+      persistNgoProfile(email, {
+        verified: false,
+        verificationStatus: 'registered',
+        status: 'Registered NGO',
+        name: user.name,
+        repName: profile.repName,
+        orgType: profile.orgType,
+        city: profile.city,
+        state: profile.state
+      });
+
+      showToast('NGO account created! Complete verification to unlock features.', 'success');
+      navigate(getDashboardPathForRole(user.role));
+    } catch (err) {
+      showToast(err.message || 'Registration failed.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -213,10 +218,6 @@ export default function NgoRegisterPage() {
                         <input id="ngo-confirm" name="confirmPassword" type="password" required placeholder="Re-enter password" />
                       </div>
                     </div>
-
-                    <p className="ngo-reg-otp-hint">Demo OTP: enter any 6 digits, then click Verify.</p>
-                    <OtpBlock type="email" prefix="ngo" onVerified={setEmailOk} />
-                    <OtpBlock type="mobile" prefix="ngo" onVerified={setMobileOk} />
                   </div>
                 </section>
 
@@ -227,8 +228,8 @@ export default function NgoRegisterPage() {
 
                 <div className="ngo-reg-actions">
                   <Link to="/register" className="ngo-reg-btn ngo-reg-btn--ghost">Back</Link>
-                  <button type="submit" className="ngo-reg-btn ngo-reg-btn--primary">
-                    Create NGO Account
+                  <button type="submit" className="ngo-reg-btn ngo-reg-btn--primary" disabled={submitting}>
+                    {submitting ? 'Creating account…' : 'Create NGO Account'}
                   </button>
                 </div>
 

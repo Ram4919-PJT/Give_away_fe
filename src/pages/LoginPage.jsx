@@ -181,13 +181,13 @@ export default function LoginPage() {
               </form>
 
               {currentUser && (
-                <div className="login-demo-access">
-                  <p className="login-demo-access__hint">
+                <div className="login-session-banner">
+                  <p className="login-session-banner__hint">
                     Already signed in as {currentUser.email}.
                   </p>
                   <button
                     type="button"
-                    className="login-demo-trigger"
+                    className="login-session-signout"
                     onClick={async () => {
                       await logout();
                       showToast('Signed out.', 'info');

@@ -56,6 +56,19 @@ export async function login(email, password) {
   });
 }
 
+export async function register({ full_name, email, mobile, password, role_name }) {
+  return request('/auth/register', {
+    method: 'POST',
+    body: {
+      full_name,
+      email: email.trim().toLowerCase(),
+      mobile,
+      password,
+      role_name
+    }
+  });
+}
+
 export async function refresh(refreshToken) {
   return request('/auth/refresh', {
     method: 'POST',

@@ -20,7 +20,7 @@ import {
   getStoredAccessToken,
   getStoredRefreshToken
 } from '../api/iamClient';
-import { mapIamUser, mapRoleToIam, normalizeMobileInput } from '../utils/roleMap';
+import { mapIamUser, mapRoleToIam, normalizeMobileInput, isUserAppRole, ADMIN_PORTAL_MESSAGE } from '../utils/roleMap';
 import { fetchPlatformData, coreClient, notificationsClient } from '../api/platformApi';
 import { mapDonationFromApi, mapVerificationFromApi, mapAssistanceRequestFromApi, buildAssistanceRequestPayload } from '../api/mappers';
 import { deriveDonorVerificationFromRequests, deriveReceiverVerificationFromRequests } from '../utils/donorVerification';
@@ -29,7 +29,6 @@ const AppContext = createContext(null);
 
 function getDefaultTab(role) {
   const map = {
-    'super-admin': 'admin-dashboard',
     donor: 'donor-dashboard',
     ngo: 'ngo-dashboard',
     receiver: 'receiver-dashboard'
@@ -403,6 +402,10 @@ export function AppProvider({ children }) {
         const me = await getMe(token);
         if (!cancelled) {
           const user = mapIamUser(me);
+          if (!isUserAppRole(user.role)) {
+            clearTokens();
+            return;
+          }
           dispatch({ type: 'LOGIN', payload: user });
           await refreshPlatformData(user.role);
         }
@@ -455,6 +458,10 @@ export function AppProvider({ children }) {
     saveTokens(tokens);
     const me = await getMe(tokens.access_token);
     const user = mapIamUser(me);
+    if (!isUserAppRole(user.role)) {
+      clearTokens();
+      throw new Error(ADMIN_PORTAL_MESSAGE);
+    }
     dispatch({ type: 'LOGIN', payload: user });
     await refreshPlatformData(user.role);
     return user;
@@ -481,6 +488,10 @@ export function AppProvider({ children }) {
     saveTokens(tokens);
     const me = await getMe(tokens.access_token);
     const user = { ...mapIamUser(me), ...profile };
+    if (!isUserAppRole(user.role)) {
+      clearTokens();
+      throw new Error(ADMIN_PORTAL_MESSAGE);
+    }
     dispatch({ type: 'LOGIN', payload: user });
     await refreshPlatformData(user.role);
     return user;
@@ -499,17 +510,6 @@ export function AppProvider({ children }) {
       await new Promise((resolve) => setTimeout(resolve, 400));
       setLogoutLoading(false);
     }
-  }, []);
-
-  const verifyEntity = useCallback((id, approvedBy) => {
-    dispatch({ type: 'APPROVE_VERIFICATION', payload: { id, approvedBy: approvedBy || 'Platform Admin' } });
-  }, []);
-
-  const rejectEntity = useCallback((id, reason) => {
-    dispatch({
-      type: 'REJECT_VERIFICATION',
-      payload: { id, reason: reason || 'Documents could not be verified. Please resubmit.' }
-    });
   }, []);
 
   const submitNgoVerification = useCallback((payload) => {
@@ -591,12 +591,10 @@ export function AppProvider({ children }) {
       loadDonorProfile,
       submitAssistanceRequest,
       markNotificationReadRemote,
-      verifyEntity,
-      rejectEntity,
       submitNgoVerification,
       setTab: (tab) => dispatch({ type: 'SET_TAB', payload: tab })
     }),
-    [state, authLoading, logoutLoading, login, register, logout, refreshPlatformData, submitDonation, submitDonorVerification, loadDonorProfile, submitAssistanceRequest, markNotificationReadRemote, verifyEntity, rejectEntity, submitNgoVerification]
+    [state, authLoading, logoutLoading, login, register, logout, refreshPlatformData, submitDonation, submitDonorVerification, loadDonorProfile, submitAssistanceRequest, markNotificationReadRemote, submitNgoVerification]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -613,7 +611,6 @@ export function getRoleDisplayName(role) {
     donor: 'Donor',
     ngo: 'NGO Partner',
     receiver: 'Receiver',
-    'super-admin': 'Platform Admin'
   };
   return map[role] || role;
 }

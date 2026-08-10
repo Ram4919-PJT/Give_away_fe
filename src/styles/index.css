@@ -27,21 +27,27 @@
 @import './receiver-profile.css';
 @import './receiver-settings.css';
 @import './landing-enhancements.css';
+@import './giveaway-home.css';
 @import './mobile-home-mockup.css';
-@import './admin-enhancements.css';
-@import './admin-dashboard.css';
-@import './admin-modules.css';
-@import './admin-verification-queue.css';
-@import './admin-fund-dashboard.css';
-@import './admin-reports-dashboard.css';
-@import './admin-logs-dashboard.css';
-@import './admin-settings-dashboard.css';
+@import './giveaway-portal-mockup.css';
 @import './logout-ui.css';
+
+.app-shell--landing {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #ebf4ff 0%, #ffffff 100%);
+}
 
 .app-shell--mobile-mockup {
   min-height: 100vh;
   min-height: 100dvh;
   background: transparent;
+}
+
+.app-shell--portal-mockup {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #ffffff;
 }
 
 

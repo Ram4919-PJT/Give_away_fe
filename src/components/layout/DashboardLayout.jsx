@@ -4,7 +4,7 @@ import { NavLink, Outlet, Navigate, useNavigate, useLocation } from 'react-route
 import * as LucideIcons from 'lucide-react';
 import { useApp, isNgoVerified, getRoleDisplayName } from '../../context/AppContext';
 import {
-  ADMIN_NAV, DONOR_NAV, RECEIVER_NAV, NGO_NAV
+  DONOR_NAV, RECEIVER_NAV, NGO_NAV
 } from '../../data/constants';
 import { useToast } from '../ui/Toast';
 import { getInitials } from '../../utils/receiverHelpers';
@@ -18,7 +18,6 @@ function SidebarIcon({ name, size = 18 }) {
 }
 
 function getNavForRole(role) {
-  if (role === 'super-admin') return ADMIN_NAV;
   if (role === 'donor') return DONOR_NAV;
   if (role === 'receiver') return RECEIVER_NAV;
   if (role === 'ngo') return NGO_NAV;
@@ -27,7 +26,6 @@ function getNavForRole(role) {
 
 function getLayoutClass(role) {
   const map = {
-    'super-admin': 'dashboard-layout--admin',
     donor: 'dashboard-layout--donor',
     receiver: 'dashboard-layout--receiver',
     ngo: 'dashboard-layout--ngo'
@@ -55,7 +53,7 @@ function SidebarBrand({ onHome, compact }) {
 }
 
 function SidebarUserCard({ user }) {
-  const roleClass = user.role === 'super-admin' ? 'admin' : user.role;
+  const roleClass = user.role;
   return (
     <div className={`sidebar-user-card sidebar-user-card--${roleClass}`}>
       <div className="sidebar-user-avatar">{getInitials(user.name)}</div>
@@ -69,7 +67,7 @@ function SidebarUserCard({ user }) {
 }
 
 export default function DashboardLayout() {
-  const { currentUser, authLoading, notifications, receiverNotifications, ngoNotifications, adminNotifications, logoutLoading } = useApp();
+  const { currentUser, authLoading, notifications, receiverNotifications, ngoNotifications, logoutLoading } = useApp();
   const { requestLogout, LogoutDialog } = useLogoutAction({ redirectTo: '/' });
   const navigate = useNavigate();
   const location = useLocation();
@@ -117,7 +115,7 @@ export default function DashboardLayout() {
     role === 'donor' ? unread(notifications)
     : role === 'receiver' ? unread(receiverNotifications)
     : role === 'ngo' ? unread(ngoNotifications)
-    : role === 'super-admin' ? unread(adminNotifications) : 0;
+    : 0;
 
   const handleNavClick = (item, e) => {
     if (role === 'ngo' && item.locked && !verified) {
@@ -139,7 +137,7 @@ export default function DashboardLayout() {
     localStorage.setItem('giveaway-theme', next);
   };
 
-  const roleClass = role === 'super-admin' ? 'admin' : role;
+  const roleClass = role;
   const layoutClass = `dashboard-layout dashboard-layout-react dashboard-layout--hamburger ${getLayoutClass(role)}`;
 
   const drawerLayer = createPortal(

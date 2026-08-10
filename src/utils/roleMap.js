@@ -2,14 +2,15 @@ const IAM_TO_FRONTEND = {
   DONOR: 'donor',
   RECEIVER: 'receiver',
   NGO: 'ngo',
-  SUPER_ADMIN: 'super-admin'
 };
 
 const FRONTEND_TO_IAM = {
   donor: 'DONOR',
   receiver: 'RECEIVER',
-  ngo: 'NGO'
+  ngo: 'NGO',
 };
+
+export const USER_APP_ROLES = ['donor', 'receiver', 'ngo'];
 
 export const REGISTER_ROLES = [
   {
@@ -47,11 +48,14 @@ const FRONTEND_TO_DASHBOARD = {
   donor: '/dashboard/donor-dashboard',
   receiver: '/dashboard/receiver-dashboard',
   ngo: '/dashboard/ngo-dashboard',
-  'super-admin': '/dashboard/admin-dashboard'
 };
 
 export function mapRoleFromIam(iamRoleName) {
-  return IAM_TO_FRONTEND[iamRoleName] || 'donor';
+  return IAM_TO_FRONTEND[iamRoleName] || null;
+}
+
+export function isUserAppRole(role) {
+  return USER_APP_ROLES.includes(role);
 }
 
 export function getDashboardPathForRole(role) {
@@ -71,3 +75,6 @@ export function mapIamUser(iamUser) {
     verified: false
   };
 }
+
+export const ADMIN_PORTAL_MESSAGE =
+  'Admin accounts must sign in through the admin portal, not this app.';

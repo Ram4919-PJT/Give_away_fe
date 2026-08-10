@@ -20,7 +20,6 @@ function getRoleRoutes(role) {
     donor: { profile: 'donor-profile', settings: 'donor-settings', notifications: 'donor-notifications' },
     receiver: { profile: 'receiver-profile', settings: 'receiver-settings', notifications: 'receiver-notifications' },
     ngo: { profile: 'ngo-profile', settings: 'ngo-settings', notifications: 'ngo-notifications' },
-    'super-admin': { profile: 'admin-dashboard', settings: 'admin-settings', notifications: 'admin-notifications' }
   };
   return map[role] || {};
 }

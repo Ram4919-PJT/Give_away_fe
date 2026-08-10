@@ -145,18 +145,3 @@ export const NGO_LOCKED_TABS = [
   'ngo-beneficiaries', 'ngo-reports'
 ];
 
-export const ADMIN_NAV = [
-  { id: 'admin-dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-  { id: 'admin-priority-queue', label: 'Priority Queue', icon: 'list-todo' },
-  { id: 'admin-verifications', label: 'Verification Queue', icon: 'shield-check' },
-  { id: 'admin-donations', label: 'Donation Management', icon: 'gift' },
-  { id: 'admin-financial-assistance', label: 'Financial Assistance', icon: 'file-heart' },
-  { id: 'admin-ngos', label: 'NGO Management', icon: 'building-2' },
-  { id: 'admin-inventory', label: 'Item Inventory', icon: 'package' },
-  { id: 'admin-funds', label: 'Fund Management', icon: 'wallet' },
-  { id: 'admin-users', label: 'User Management', icon: 'users' },
-  { id: 'admin-notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'admin-reports', label: 'Reports & Analytics', icon: 'bar-chart-3' },
-  { id: 'admin-logs', label: 'System Logs', icon: 'scroll-text' },
-  { id: 'admin-settings', label: 'Settings', icon: 'settings' }
-];

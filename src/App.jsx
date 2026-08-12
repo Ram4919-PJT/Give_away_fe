@@ -10,6 +10,10 @@ import RegisterRolePage from './pages/RegisterRolePage';
 import DonorRegisterPage from './pages/register/DonorRegisterPage';
 import ReceiverRegisterPage from './pages/register/ReceiverRegisterPage';
 import NgoRegisterPage from './pages/register/NgoRegisterPage';
+import DonationEntryPage from './pages/donate/DonationEntryPage';
+import DonateMobilePage from './pages/donate/DonateMobilePage';
+import DonatePaymentPage from './pages/donate/DonatePaymentPage';
+import DonateSuccessPage from './pages/donate/DonateSuccessPage';
 import { useApp } from './context/AppContext';
 import {
   DonorDashboard, DonorDonateMoney, DonorDonateItem,
@@ -50,14 +54,15 @@ export default function App() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard');
   const isAuthPage = ['/login', '/register'].some((p) => location.pathname === p)
-    || location.pathname.startsWith('/register/');
+    || location.pathname.startsWith('/register/')
+    || location.pathname.startsWith('/donate');
   const isMobileMockup = location.pathname === '/mobile-home';
   const isPortalMockup = location.pathname === '/portal-mockup';
   const isLanding = location.pathname === '/';
 
   return (
     <div className={`app-shell${isAuthPage ? ' app-shell--auth' : ''}${isDashboard ? ' app-shell--dashboard' : ''}${isMobileMockup ? ' app-shell--mobile-mockup' : ''}${isPortalMockup ? ' app-shell--portal-mockup' : ''}${isLanding ? ' app-shell--landing' : ''}`}>
-      {!isDashboard && !isMobileMockup && !isPortalMockup && !isLanding && <AppHeader />}
+      {!isDashboard && !isMobileMockup && !isPortalMockup && !isLanding && !isAuthPage && <AppHeader />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/portal-mockup" element={<PortalMockupPage />} />
@@ -67,6 +72,12 @@ export default function App() {
         <Route path="/register/donor" element={<DonorRegisterPage />} />
         <Route path="/register/receiver" element={<ReceiverRegisterPage />} />
         <Route path="/register/ngo" element={<NgoRegisterPage />} />
+
+        {/* Donation Flow */}
+        <Route path="/donate" element={<DonationEntryPage />} />
+        <Route path="/donate/mobile" element={<DonateMobilePage />} />
+        <Route path="/donate/payment" element={<DonatePaymentPage />} />
+        <Route path="/donate/success" element={<DonateSuccessPage />} />
 
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
@@ -110,7 +121,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {!isDashboard && !isMobileMockup && !isPortalMockup && !isLanding && <AppFooter />}
+      {!isDashboard && !isMobileMockup && !isPortalMockup && !isLanding && !isAuthPage && <AppFooter />}
     </div>
   );
 }

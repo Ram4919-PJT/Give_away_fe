@@ -62,3 +62,31 @@ export async function getMe(accessToken) {
   const token = accessToken || getStoredAccessToken();
   return apiRequest('/auth/me', { auth: !!token });
 }
+
+export async function sendOtp(mobile, purpose = 'DONATION_LOGIN') {
+  return apiRequest('/auth/send-otp', {
+    method: 'POST',
+    body: { mobile, purpose },
+    auth: false,
+  }).catch(async () => {
+    return apiRequest('/otp/send', {
+      method: 'POST',
+      body: { identifier: mobile, purpose },
+      auth: false,
+    });
+  });
+}
+
+export async function verifyOtp(mobile, otpCode, purpose = 'DONATION_LOGIN') {
+  return apiRequest('/auth/verify-otp', {
+    method: 'POST',
+    body: { mobile, otp: otpCode, purpose },
+    auth: false,
+  }).catch(async () => {
+    return apiRequest('/otp/verify', {
+      method: 'POST',
+      body: { identifier: mobile, otp_code: otpCode, purpose },
+      auth: false,
+    });
+  });
+}

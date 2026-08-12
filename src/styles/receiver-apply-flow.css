@@ -55,17 +55,17 @@
   font-weight: 600;
   font-family: inherit;
   color: #FFFFFF !important;
-  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+  background: linear-gradient(135deg, #1268E8 0%, #0F54BE 100%) !important;
   border: none !important;
   border-radius: 12px !important;
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.32) !important;
+  box-shadow: 0 6px 20px rgba(18, 104, 232, 0.32) !important;
   cursor: pointer;
   transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
 }
 
 .apply-flow-start-btn:hover {
-  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%) !important;
-  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.38) !important;
+  background: linear-gradient(135deg, #0F54BE 0%, #0B245B 100%) !important;
+  box-shadow: 0 10px 28px rgba(18, 104, 232, 0.38) !important;
   transform: translateY(-2px);
 }
 
@@ -786,15 +786,15 @@
 }
 
 .apply-flow-btn--primary {
-  background: #22C55E !important;
+  background: #1268E8 !important;
   color: #FFFFFF !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.28) !important;
+  box-shadow: 0 4px 14px rgba(18, 104, 232, 0.28) !important;
 }
 
 .apply-flow-btn--primary:hover {
-  background: #16A34A !important;
-  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.34) !important;
+  background: #0F54BE !important;
+  box-shadow: 0 6px 18px rgba(18, 104, 232, 0.34) !important;
   transform: translateY(-1px);
 }
 

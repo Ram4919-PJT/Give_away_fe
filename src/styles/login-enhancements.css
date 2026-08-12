@@ -206,7 +206,7 @@
 }
 
 #login-view .auth-password-toggle:hover {
-  color: #059669 !important;
+  color: #ffffff !important;
   background: transparent !important;
   transform: translateY(-50%) !important;
   box-shadow: none !important;
@@ -254,15 +254,15 @@
 
 #login-view .auth-btn-green.login-submit,
 #login-view .auth-btn-green.auth-submit-btn {
-  background: #059669 !important;
+  background: #1268E8 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.22) !important;
+  box-shadow: 0 4px 14px rgba(18, 104, 232, 0.22) !important;
 }
 
 #login-view .auth-btn-green.login-submit:hover:not(:disabled),
 #login-view .auth-btn-green.auth-submit-btn:hover:not(:disabled) {
-  background: #047857 !important;
-  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.3) !important;
+  background: #0F54BE !important;
+  box-shadow: 0 6px 18px rgba(18, 104, 232, 0.3) !important;
   transform: translateY(-1px);
 }
 

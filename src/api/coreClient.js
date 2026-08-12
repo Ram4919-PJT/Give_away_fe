@@ -47,3 +47,27 @@ export async function getAssistanceRequest(requestId) {
 export async function createAssistanceRequest(payload) {
   return apiRequest('/core/assistance/requests', { method: 'POST', body: payload });
 }
+
+export async function createDonationOrder({ amount, currency = 'INR', causeId, mobile }) {
+  return apiRequest('/donations/create-order', {
+    method: 'POST',
+    body: { amount, currency, causeId, mobile },
+  }).catch(async () => {
+    return apiRequest('/core/donations/create-order', {
+      method: 'POST',
+      body: { amount, currency, causeId, mobile },
+    });
+  });
+}
+
+export async function verifyDonationPayment({ orderId, paymentId, signature }) {
+  return apiRequest('/donations/verify-payment', {
+    method: 'POST',
+    body: { orderId, paymentId, signature },
+  }).catch(async () => {
+    return apiRequest('/core/donations/verify-payment', {
+      method: 'POST',
+      body: { orderId, paymentId, signature },
+    });
+  });
+}

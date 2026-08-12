@@ -406,13 +406,13 @@
 
 .mhm-btn--primary {
   color: #fff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 18px rgba(34, 197, 94, 0.28);
+  background: linear-gradient(135deg, #1268E8 0%, #0F54BE 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 18px rgba(18, 104, 232, 0.28);
 }
 
 .mhm-btn--primary:hover,
 .mhm-btn--primary:active {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, #0F54BE 0%, #0B245B 100%);
   transform: translateY(-1px);
 }
 

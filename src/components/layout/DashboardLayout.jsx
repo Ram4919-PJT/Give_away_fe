@@ -35,17 +35,25 @@ function getLayoutClass(role) {
 
 function SidebarBrand({ onHome, compact }) {
   return (
-    <button type="button" className={`dashboard-sidebar-brand ${compact ? 'dashboard-sidebar-brand--compact' : ''}`} onClick={onHome}>
-      <div className="dashboard-sidebar-logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M6 14c0-2.5 2-5 6-5s6 2.5 6 5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-          <circle cx="12" cy="8" r="1.5" fill="#86EFAC" />
-        </svg>
-      </div>
+    <button
+      type="button"
+      onClick={onHome}
+      className={`inline-flex items-center gap-3 bg-transparent border-none p-0 cursor-pointer text-left select-none outline-none ${compact ? 'justify-center' : ''}`}
+      aria-label="Aja Abayahastham Home"
+    >
+      <img
+        src="/assets/donor/Aja_Abayahastham_Brand_Logo.png"
+        alt="Aja Abayahastham Logo"
+        className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+      />
       {!compact && (
-        <div className="dashboard-sidebar-brand-text">
-          <span className="dashboard-sidebar-brand-name">Give Away</span>
-          <span className="dashboard-sidebar-brand-sub">Aja Abayahastham</span>
+        <div className="flex flex-col justify-center text-left">
+          <span className="text-[#0B245B] font-extrabold text-base sm:text-lg tracking-tight leading-tight">
+            Aja Abayahastham
+          </span>
+          <span className="text-[#49638F] font-medium text-[10px] sm:text-[11px] leading-tight">
+            Trust &amp; Transparency in Every Gift
+          </span>
         </div>
       )}
     </button>

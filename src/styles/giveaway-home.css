@@ -188,14 +188,14 @@
   margin-left: auto;
 }
 
-/* DONATE NOW — muted green, small rounded rect (mockup) */
+/* DONATE NOW — primary blue (mockup) */
 .ga-header__donate {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 36px;
   padding: 8px 18px;
-  background-color: #22c55e;
+  background-color: #1268E8;
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -206,14 +206,13 @@
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.22);
+  box-shadow: 0 2px 6px rgba(18, 104, 232, 0.22);
   transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .ga-header__donate:hover {
-  background-color: #16a34a;
-  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.28);
-  transform: none;
+  background-color: #0F54BE;
+  box-shadow: 0 4px 12px rgba(18, 104, 232, 0.32);
 }
 
 .ga-header__donate--block {
@@ -347,8 +346,8 @@
 }
 
 .ga-section__title {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
+  margin: 0 0 1.75rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--ga-navy);
   text-align: center;
@@ -381,13 +380,13 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
   padding-top: 1rem;
 }
 
 .ga-hero__title {
-  margin: 0 0 0.5rem;
-  font-size: 32px;
+  margin: 0 0 0.65rem;
+  font-size: 42px;
   font-weight: 800;
   color: var(--ga-navy);
   letter-spacing: -0.02em;
@@ -395,7 +394,7 @@
 
 .ga-hero__subtitle {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   color: var(--ga-muted);
 }
 
@@ -405,7 +404,7 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 768px) {
@@ -421,35 +420,45 @@
 .ga-reg-card {
   background: var(--ga-white);
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  padding: 1.75rem 1.25rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem 1.35rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  border: 2px solid #000000;
 }
 
 .ga-reg-card__icon {
-  height: 64px;
-  margin-bottom: 1rem;
+  height: 110px;
+  width: 100%;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.ga-reg-card__img {
+  max-height: 105px;
+  max-width: 130px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .ga-reg-card h3 {
-  margin: 0 0 0.65rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--ga-navy);
 }
 
 .ga-reg-card p {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.5rem;
   flex: 1;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.65;
   color: var(--ga-muted);
 }
 
@@ -474,32 +483,32 @@
   background: var(--ga-white);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #000000;
 }
 
 .ga-story-card img {
   width: 100%;
-  height: 160px;
+  height: 170px;
   object-fit: cover;
 }
 
 .ga-story-card__body {
-  padding: 1.15rem;
+  padding: 1.25rem;
 }
 
 .ga-story-card__body h3 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
+  margin: 0 0 0.55rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--ga-navy);
   line-height: 1.35;
 }
 
 .ga-story-card__body p {
-  margin: 0 0 0.65rem;
-  font-size: 0.82rem;
-  line-height: 1.55;
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: var(--ga-muted);
 }
 
@@ -507,14 +516,14 @@
   border: none;
   background: none;
   padding: 0;
-  color: #22c55e;
-  font-size: 0.82rem;
+  color: #0284c7;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
 }
 
 .ga-read-more:hover {
-  color: #16a34a;
+  color: #0369a1;
 }
 
 /* Impact metrics */
@@ -544,43 +553,48 @@
 .ga-metric-card {
   background: var(--ga-white);
   border-radius: 16px;
-  padding: 1.25rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 1.35rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #000000;
 }
 
 .ga-metric-card__icon {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
-  background: #ecfdf5;
-  color: #22c55e;
+  background: #eff6ff;
+  color: #0284c7;
+  border: 1px solid #0284c7;
   display: grid;
   place-items: center;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
 .ga-metric-card__label {
-  margin: 0 0 0.35rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--ga-muted);
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   line-height: 1.3;
 }
 
 .ga-metric-card__value {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  color: #16a34a;
+  color: #0284c7; /* BLUE statistics color */
 }
 
 .ga-metric-card__chart svg {
   display: block;
   width: 100%;
-  height: 36px;
+  height: 38px;
+}
+
+.ga-metric-card__chart svg polyline {
+  stroke: #0284c7 !important; /* BLUE graph line color */
 }
 
 /* Testimonials */
@@ -603,9 +617,9 @@
 .ga-review-card {
   background: var(--ga-white);
   border-radius: 16px;
-  padding: 1.25rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 1.35rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #000000;
   position: relative;
 }
 
@@ -615,7 +629,7 @@
   right: 0.85rem;
   font-size: 2.5rem;
   line-height: 1;
-  color: #22c55e;
+  color: #0284c7;
   opacity: 0.35;
   font-family: Georgia, serif;
 }
@@ -628,22 +642,23 @@
 }
 
 .ga-review-card__avatar {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid #000000;
 }
 
 .ga-review-card__name {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--ga-navy);
 }
 
 .ga-review-card__role {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--ga-muted);
 }
 
@@ -656,8 +671,8 @@
 
 .ga-review-card blockquote {
   margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.6;
+  font-size: 0.98rem;
+  line-height: 1.65;
   color: var(--ga-muted);
   font-style: italic;
   padding-right: 1.5rem;
@@ -674,9 +689,9 @@
 .ga-contact-panel {
   background: var(--ga-white);
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  padding: 1.75rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #000000;
+  padding: 2rem;
 }
 
 .ga-contact-form {

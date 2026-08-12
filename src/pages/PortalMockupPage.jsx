@@ -29,7 +29,7 @@ const NAV_LINKS = [
 const REGISTRATION_CARDS = [
   {
     key: 'donor',
-    icon: '💚',
+    image: '/assets/images/donor-movement.jpg',
     tone: 'donor',
     title: 'Donor Registration',
     desc: 'Share items or funds and track every gift from pickup to delivery with full transparency.',
@@ -38,7 +38,7 @@ const REGISTRATION_CARDS = [
   },
   {
     key: 'receiver',
-    icon: '🙋',
+    image: '/assets/images/receiver-movement.jpg',
     tone: 'receiver',
     title: 'Receiver Registration',
     desc: 'Apply for essential items and financial assistance when your family needs support.',
@@ -47,7 +47,7 @@ const REGISTRATION_CARDS = [
   },
   {
     key: 'ngo',
-    icon: '🏛️',
+    image: '/assets/images/ngo-movement.jpg',
     tone: 'ngo',
     title: 'NGO Registration',
     desc: 'Partner with Give Away to coordinate relief programs and reach verified beneficiaries.',
@@ -63,7 +63,7 @@ const STAT_CARDS = [
     data: [
       { v: 12 }, { v: 18 }, { v: 15 }, { v: 22 }, { v: 28 }, { v: 26 }, { v: 34 },
     ],
-    color: '#2563eb',
+    color: '#0284c7',
   },
   {
     label: 'Total Items Donated',
@@ -71,7 +71,7 @@ const STAT_CARDS = [
     data: [
       { v: 8 }, { v: 14 }, { v: 20 }, { v: 18 }, { v: 24 }, { v: 30 }, { v: 36 },
     ],
-    color: '#22c55e',
+    color: '#0284c7',
   },
   {
     label: 'Total Families Helped',
@@ -79,7 +79,7 @@ const STAT_CARDS = [
     data: [
       { v: 10 }, { v: 12 }, { v: 16 }, { v: 22 }, { v: 20 }, { v: 28 }, { v: 32 },
     ],
-    color: '#3b82f6',
+    color: '#0284c7',
   },
   {
     label: 'Active NGO Partners',
@@ -87,7 +87,7 @@ const STAT_CARDS = [
     data: [
       { v: 6 }, { v: 9 }, { v: 11 }, { v: 14 }, { v: 18 }, { v: 17 }, { v: 22 },
     ],
-    color: '#16a34a',
+    color: '#0284c7',
   },
 ];
 
@@ -414,7 +414,7 @@ export default function PortalMockupPage() {
             {REGISTRATION_CARDS.map((card) => (
               <article key={card.key} className="portal-reg-card">
                 <div className={`portal-reg-card__icon portal-reg-card__icon--${card.tone}`}>
-                  {card.icon}
+                  <img src={card.image} alt={card.title} style={{ maxHeight: '90px', maxWidth: '110px', objectFit: 'contain' }} />
                 </div>
                 <h3>{card.title}</h3>
                 <p>{card.desc}</p>

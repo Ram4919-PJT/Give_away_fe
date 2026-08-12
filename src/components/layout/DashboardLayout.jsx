@@ -38,23 +38,23 @@ function SidebarBrand({ onHome, compact }) {
     <button
       type="button"
       onClick={onHome}
-      className={`inline-flex items-center gap-3 bg-transparent border-none p-0 cursor-pointer text-left select-none outline-none ${compact ? 'justify-center' : ''}`}
-      aria-label="Aja Abayahastham Home"
+      className={`dashboard-sidebar-brand dd-brand${compact ? ' dd-brand--compact' : ''}`}
+      aria-label="Give Away Home"
     >
-      <img
-        src="/assets/donor/Aja_Abayahastham_Brand_Logo.png"
-        alt="Aja Abayahastham Logo"
-        className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
-      />
+      <span className="dd-brand__mark">
+        <img
+          src="/assets/donor/Aja_Abayahastham_Brand_Logo.png"
+          alt=""
+          width={36}
+          height={36}
+          decoding="async"
+        />
+      </span>
       {!compact && (
-        <div className="flex flex-col justify-center text-left">
-          <span className="text-[#0B245B] font-extrabold text-base sm:text-lg tracking-tight leading-tight">
-            Aja Abayahastham
-          </span>
-          <span className="text-[#49638F] font-medium text-[10px] sm:text-[11px] leading-tight">
-            Trust &amp; Transparency in Every Gift
-          </span>
-        </div>
+        <span className="dd-brand__text">
+          <span className="dd-brand__name">Give Away</span>
+          <span className="dd-brand__tag">Serve · Support · Uplift</span>
+        </span>
       )}
     </button>
   );
@@ -71,6 +71,103 @@ function SidebarUserCard({ user }) {
         <span className="sidebar-user-role">{getRoleDisplayName(user.role)}</span>
       </div>
     </div>
+  );
+}
+
+function DonorSidebarCta({ onDonate }) {
+  return (
+    <div className="donor-sidebar-cta">
+      <h3>Together, we create real impact.</h3>
+      <p>Your kindness drives real change.</p>
+      <button type="button" className="dd-btn" onClick={onDonate}>Donate Now</button>
+    </div>
+  );
+}
+
+function SidebarNavBody({
+  currentUser,
+  role,
+  verified,
+  navItems,
+  notifCount,
+  location,
+  onNavClick,
+  onHome,
+  onDonate,
+  onLogout,
+  onToggleTheme,
+  logoutLoading,
+  showClose,
+  onClose,
+  showUserCard = true,
+}) {
+  return (
+    <>
+      <div className="dashboard-sidebar-drawer-head dd-sidebar-head">
+        <SidebarBrand onHome={onHome} />
+        {showClose && (
+          <button type="button" className="dashboard-drawer-close" onClick={onClose} aria-label="Close menu">
+            <LucideIcons.X size={20} />
+          </button>
+        )}
+      </div>
+
+      {showUserCard && <SidebarUserCard user={currentUser} />}
+
+      <nav className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
+        <p className="sidebar-nav-label">Menu</p>
+        <ul className="sidebar-nav">
+          {navItems.map((item) => {
+            const isLocked = role === 'ngo' && item.locked && !verified;
+            const isNotif = item.id.includes('notifications');
+            const path = `/dashboard/${item.id}`;
+            const isActive = location.pathname === path || location.pathname.startsWith(`${path}/`);
+
+            return (
+              <li key={item.id} className={`sidebar-item ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}>
+                {isLocked ? (
+                  <a
+                    href="#"
+                    className="sidebar-link"
+                    onClick={(e) => onNavClick(item, e)}
+                  >
+                    <span className="sidebar-icon"><SidebarIcon name={item.icon} /></span>
+                    <span className="sidebar-link-label">{item.label}</span>
+                    <span className="sidebar-lock-icon"><LucideIcons.Lock size={14} /></span>
+                  </a>
+                ) : (
+                  <NavLink to={path} className="sidebar-link" onClick={() => onClose?.()}>
+                    <span className="sidebar-icon"><SidebarIcon name={item.icon} /></span>
+                    <span className="sidebar-link-label">{item.label}</span>
+                    {isNotif && notifCount > 0 && (
+                      <span className="sidebar-badge">{notifCount}</span>
+                    )}
+                  </NavLink>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {role === 'donor' && <DonorSidebarCta onDonate={onDonate} />}
+
+      <div className="dashboard-sidebar-footer">
+        <button type="button" className="sidebar-link sidebar-theme-btn" onClick={onToggleTheme} aria-label="Toggle theme">
+          <span className="sidebar-icon"><LucideIcons.Sun size={18} /></span>
+          Toggle theme
+        </button>
+        <button
+          type="button"
+          className={`sidebar-link sidebar-logout-btn${logoutLoading ? ' is-loading' : ''}`}
+          onClick={onLogout}
+          disabled={logoutLoading}
+        >
+          <span className="sidebar-icon"><LucideIcons.LogOut size={18} /></span>
+          {logoutLoading ? 'Signing out…' : 'Logout'}
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -145,8 +242,35 @@ export default function DashboardLayout() {
     localStorage.setItem('giveaway-theme', next);
   };
 
+  const goDonate = () => {
+    setMenuOpen(false);
+    navigate('/dashboard/donor-donate-money');
+  };
+
   const roleClass = role;
-  const layoutClass = `dashboard-layout dashboard-layout-react dashboard-layout--hamburger ${getLayoutClass(role)}`;
+  const withSidebar = role === 'donor';
+  const layoutClass = [
+    'dashboard-layout',
+    'dashboard-layout-react',
+    'dashboard-layout--hamburger',
+    getLayoutClass(role),
+    withSidebar ? 'dashboard-layout--with-sidebar' : '',
+  ].filter(Boolean).join(' ');
+
+  const sharedSidebarProps = {
+    currentUser,
+    role,
+    verified,
+    navItems,
+    notifCount,
+    location,
+    onNavClick: handleNavClick,
+    onHome: () => { navigate('/'); setMenuOpen(false); },
+    onDonate: goDonate,
+    onLogout: handleLogout,
+    onToggleTheme: toggleTheme,
+    logoutLoading,
+  };
 
   const drawerLayer = createPortal(
     <>
@@ -164,66 +288,11 @@ export default function DashboardLayout() {
         className={`dashboard-sidebar dashboard-sidebar--drawer ${menuOpen ? 'is-open' : ''}`}
         aria-hidden={!menuOpen}
       >
-        <div className="dashboard-sidebar-drawer-head">
-          <SidebarBrand onHome={() => { navigate('/'); setMenuOpen(false); }} />
-          <button type="button" className="dashboard-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
-            <LucideIcons.X size={20} />
-          </button>
-        </div>
-
-        <SidebarUserCard user={currentUser} />
-
-        <nav className="dashboard-sidebar-nav" aria-label="Dashboard navigation">
-          <p className="sidebar-nav-label">Menu</p>
-          <ul className="sidebar-nav">
-            {navItems.map((item) => {
-              const isLocked = role === 'ngo' && item.locked && !verified;
-              const isNotif = item.id.includes('notifications');
-              const path = `/dashboard/${item.id}`;
-              const isActive = location.pathname === path || location.pathname.startsWith(`${path}/`);
-
-              return (
-                <li key={item.id} className={`sidebar-item ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}>
-                  {isLocked ? (
-                    <a
-                      href="#"
-                      className="sidebar-link"
-                      onClick={(e) => handleNavClick(item, e)}
-                    >
-                      <span className="sidebar-icon"><SidebarIcon name={item.icon} /></span>
-                      <span className="sidebar-link-label">{item.label}</span>
-                      <span className="sidebar-lock-icon"><LucideIcons.Lock size={14} /></span>
-                    </a>
-                  ) : (
-                    <NavLink to={path} className="sidebar-link" onClick={() => setMenuOpen(false)}>
-                      <span className="sidebar-icon"><SidebarIcon name={item.icon} /></span>
-                      <span className="sidebar-link-label">{item.label}</span>
-                      {isNotif && notifCount > 0 && (
-                        <span className="sidebar-badge">{notifCount}</span>
-                      )}
-                    </NavLink>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="dashboard-sidebar-footer">
-          <button type="button" className="sidebar-link sidebar-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-            <span className="sidebar-icon"><LucideIcons.Sun size={18} /></span>
-            Toggle theme
-          </button>
-          <button
-            type="button"
-            className={`sidebar-link sidebar-logout-btn${logoutLoading ? ' is-loading' : ''}`}
-            onClick={handleLogout}
-            disabled={logoutLoading}
-          >
-            <span className="sidebar-icon"><LucideIcons.LogOut size={18} /></span>
-            {logoutLoading ? 'Signing out…' : 'Logout'}
-          </button>
-        </div>
+        <SidebarNavBody
+          {...sharedSidebarProps}
+          showClose
+          onClose={() => setMenuOpen(false)}
+        />
       </aside>
     </>,
     document.body
@@ -232,6 +301,18 @@ export default function DashboardLayout() {
   return (
     <div className={layoutClass}>
       {LogoutDialog}
+
+      {withSidebar && (
+        <aside className="dashboard-sidebar dashboard-sidebar--desktop" aria-label="Donor sidebar">
+          <SidebarNavBody
+            {...sharedSidebarProps}
+            showClose={false}
+            showUserCard={false}
+            onClose={() => {}}
+          />
+        </aside>
+      )}
+
       <DashboardTopbar
         user={currentUser}
         role={role}

@@ -1,7 +1,7 @@
 import { apiRequest } from './client';
 
 export async function listNotifications() {
-  return apiRequest('/notifications/');
+  return apiRequest('/notifications');
 }
 
 export async function markNotificationRead(notificationId) {
@@ -9,9 +9,13 @@ export async function markNotificationRead(notificationId) {
 }
 
 export async function listNotificationPreferences() {
-  return apiRequest('/notifications/preferences');
+  return apiRequest('/notifications/preferences').catch(() =>
+    apiRequest('/preferences')
+  );
 }
 
 export async function updateNotificationPreference(payload) {
-  return apiRequest('/notifications/preferences', { method: 'PUT', body: payload });
+  return apiRequest('/notifications/preferences', { method: 'PUT', body: payload }).catch(
+    () => apiRequest('/preferences', { method: 'PUT', body: payload })
+  );
 }

@@ -310,7 +310,7 @@ function RegistrationCard({ onNavigate }) {
         <div className="pt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
           <Link
             to="/register"
-            className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-[#EEF5FF] border border-[#DCE8FA] text-[#1268E8] font-bold text-sm rounded-xl transition flex items-center justify-center gap-2"
+            className="lp-btn-outline w-full sm:w-auto"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
@@ -319,7 +319,7 @@ function RegistrationCard({ onNavigate }) {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full sm:flex-1 px-7 py-3.5 bg-[#1268E8] hover:bg-[#0f54be] text-white font-bold text-sm rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="lp-btn w-full sm:flex-1"
           >
             <span>{submitting ? 'Creating account…' : 'Create Donor Account'}</span>
             <ArrowRight className="w-4 h-4" />

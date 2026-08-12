@@ -14,21 +14,21 @@ export function mapDonationStatus(status) {
 export function mapDonationFromApi(donation) {
   const isMoney = donation.donation_type === 'MONEY';
   let purpose = 'General Donation';
-  let amount = null;
+  let amount = donation.amount != null ? Number(donation.amount) : null;
 
   if (donation.notes) {
     const amountMatch = donation.notes.match(/Amount:\s*([0-9.]+)/i);
     const purposeMatch = donation.notes.match(/Purpose:\s*([^|]+)/i);
-    if (amountMatch) amount = Number(amountMatch[1]);
+    if (amount == null && amountMatch) amount = Number(amountMatch[1]);
     if (purposeMatch) purpose = purposeMatch[1].trim();
   }
 
   return {
     id: donation.donation_id,
     donation_id: donation.donation_id,
-    donorEmail: donation.donor_user_id,
+    donorEmail: donation.donor_email || donation.email || '',
     type: isMoney ? 'Financial' : 'Items',
-    donor_user_id: donation.donor_user_id,
+    donor_user_id: donation.donor_user_id ?? donation.donor_id,
     amount: amount || 0,
     fund: purpose,
     purpose,
@@ -79,7 +79,7 @@ export function mapNotificationFromApi(notification) {
     id: notification.notification_id,
     notification_id: notification.notification_id,
     title: notification.title,
-    message: notification.body,
+    message: notification.message || notification.body || '',
     read: notification.status === 'READ',
     time: relativeTime(notification.created_at),
     group: notificationGroup(notification.created_at),
@@ -90,8 +90,11 @@ export function mapNotificationFromApi(notification) {
 
 const VERIFICATION_STATUS_MAP = {
   PENDING: 'Pending',
+  SUBMITTED: 'Pending',
   IN_REVIEW: 'Under Review',
+  UNDER_REVIEW: 'Under Review',
   APPROVED: 'Verified',
+  VERIFIED: 'Verified',
   REJECTED: 'Rejected',
 };
 
@@ -102,13 +105,16 @@ const ENTITY_TYPE_MAP = {
 };
 
 export function mapVerificationFromApi(request) {
-  const type = ENTITY_TYPE_MAP[request.entity_type] || request.entity_type;
+  const rawType = request.request_type || request.entity_type;
+  const type = ENTITY_TYPE_MAP[rawType] || rawType;
   const label = `${type} verification`;
+  const id = request.request_id || request.verification_request_id;
   return {
-    id: request.verification_request_id,
-    verification_request_id: request.verification_request_id,
+    id,
+    verification_request_id: id,
+    request_id: id,
     type,
-    entity_id: request.entity_id,
+    entity_id: request.entity_id || request.user_id,
     user_id: request.user_id,
     status: VERIFICATION_STATUS_MAP[request.status] || request.status,
     rawStatus: request.status,
@@ -118,7 +124,7 @@ export function mapVerificationFromApi(request) {
     avatar: type?.charAt(0) || '?',
     email: '',
     phone: '',
-    documents: [],
+    documents: request.documents || [],
   };
 }
 
@@ -126,19 +132,24 @@ export function mapProgramFromApi(program) {
   return {
     id: program.program_id,
     program_id: program.program_id,
-    title: program.title,
+    title: program.program_name || program.title,
     description: program.description || '',
     status: program.status,
+    category: program.category,
     created_at: program.created_at,
   };
 }
 
 const ASSISTANCE_STATUS_MAP = {
   OPEN: 'Submitted',
+  SUBMITTED: 'Submitted',
+  UNDER_REVIEW: 'Under Review',
   MATCHED: 'Under Review',
+  APPROVED: 'Completed',
   FULFILLED: 'Completed',
   CLOSED: 'Completed',
   CANCELLED: 'Rejected',
+  REJECTED: 'Rejected',
 };
 
 function parseAssistanceDescription(description = '') {
@@ -159,23 +170,33 @@ function parseAssistanceDescription(description = '') {
 export function mapAssistanceRequestFromApi(request) {
   const parsed = parseAssistanceDescription(request.description || '');
   const status = ASSISTANCE_STATUS_MAP[request.status] || request.status;
+  const id = request.application_id || request.assistance_request_id;
+  const purpose = request.purpose || parsed.purpose || request.title || 'Assistance request';
+  const amount = request.amount_requested != null
+    ? Number(request.amount_requested)
+    : parsed.amount;
+  const applied = request.submitted_at || request.created_at;
   return {
-    id: request.assistance_request_id,
-    assistance_request_id: request.assistance_request_id,
-    receiver_user_id: request.receiver_user_id,
-    receiverEmail: request.receiver_user_id,
-    assistanceType: parsed.category || request.title,
-    purpose: parsed.purpose || request.title,
-    amount: parsed.amount,
-    description: parsed.details,
+    id,
+    assistance_request_id: id,
+    application_id: id,
+    receiver_user_id: request.receiver_id || request.receiver_user_id,
+    receiverEmail: request.receiver_email || request.email || '',
+    assistanceType: parsed.category || purpose,
+    purpose,
+    amount,
+    description: parsed.details || purpose,
     notes: parsed.notes,
     status,
     rawStatus: request.status,
-    appliedDate: request.created_at ? String(request.created_at).split('T')[0] : '',
+    appliedDate: applied ? String(applied).split('T')[0] : '',
     assistanceIcon: '📋',
-    rejectionReason: request.status === 'CANCELLED' ? 'Application was cancelled or rejected.' : null,
+    rejectionReason:
+      request.status === 'CANCELLED' || request.status === 'REJECTED'
+        ? 'Application was cancelled or rejected.'
+        : null,
     reviewNotes:
-      request.status === 'OPEN'
+      request.status === 'OPEN' || request.status === 'SUBMITTED'
         ? 'Your application is queued for initial review by the AJA Abayahastham verification team.'
         : null,
   };

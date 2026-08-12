@@ -18,10 +18,10 @@ export default function RoleAuthModal({ roleKey, onClose, onRegister, onLogin })
         <h2 className="role-auth-title">{config.title}</h2>
         <p className="role-auth-desc">{config.desc}</p>
         <div className="role-auth-actions">
-          <button type="button" className="role-auth-btn role-auth-btn--primary" onClick={onRegister}>
+          <button type="button" className="lp-btn" onClick={onRegister}>
             {config.registerLabel}
           </button>
-          <button type="button" className="role-auth-btn role-auth-btn--secondary" onClick={onLogin}>
+          <button type="button" className="lp-btn-outline" onClick={onLogin}>
             Sign In
           </button>
         </div>

@@ -1,14 +1,17 @@
 export function getNgoRequests(requests, user) {
   if (!user) return [];
-  const key = (user.email || '').toLowerCase();
-  return (requests || []).filter((r) => (r.ngoEmail || '').toLowerCase() === key);
+  const key = String(user.email || '').toLowerCase();
+  return (Array.isArray(requests) ? requests : []).filter(
+    (r) => String(r.ngoEmail ?? '').toLowerCase() === key
+  );
 }
 
 export function getNgoStats(requests, beneficiaries, verified, submitted) {
-  const approved = requests.filter((r) => r.status === 'Approved').length;
-  const underReview = requests.filter((r) => r.status === 'Under Review').length;
+  const list = Array.isArray(requests) ? requests : [];
+  const approved = list.filter((r) => r.status === 'Approved').length;
+  const underReview = list.filter((r) => r.status === 'Under Review').length;
   return {
-    donationRequests: requests.length,
+    donationRequests: list.length,
     approved,
     underReview,
     beneficiaries: verified ? (beneficiaries?.length || 0) : 0,

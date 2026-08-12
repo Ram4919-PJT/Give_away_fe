@@ -255,7 +255,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-[#0052FF] hover:bg-[#0B57D0] text-white font-bold text-xs sm:text-sm py-3.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 cursor-pointer disabled:opacity-50 border-none"
+                  className="lp-btn w-full"
                 >
                   <span>{submitting ? 'Signing in…' : 'Sign in'}</span>
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />

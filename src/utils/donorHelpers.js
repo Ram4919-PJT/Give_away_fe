@@ -2,15 +2,18 @@ import { DONOR_JOURNEY_STEPS, DONOR_STATUS_MAP } from '../data/donorConstants';
 
 export function getDonorDonations(donations, user) {
   if (!user) return [];
-  const emailKey = (user.email || '').toLowerCase();
+  const emailKey = String(user.email || '').toLowerCase();
   const userId = user.id || user.user_id || user.userId;
-  const list = donations || [];
-  const matched = list.filter(
-    (d) =>
-      (d.donorEmail || '').toLowerCase() === emailKey
-      || d.donor === user.name
-      || (userId && (d.donor_user_id === userId || d.donorEmail === userId))
-  );
+  const list = Array.isArray(donations) ? donations : [];
+  const matched = list.filter((d) => {
+    const donorEmail = String(d.donorEmail ?? '').toLowerCase();
+    const donorUserId = d.donor_user_id ?? d.donorId;
+    return (
+      (emailKey && donorEmail === emailKey)
+      || (d.donor && d.donor === user.name)
+      || (userId != null && (donorUserId === userId || String(d.donorEmail) === String(userId)))
+    );
+  });
   if (!matched.length && list.length && user.role === 'donor') return list;
   return matched;
 }

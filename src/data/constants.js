@@ -108,15 +108,17 @@ export const ROLE_AUTH_CONFIG = {
 export const DONOR_NAV = [
   { id: 'donor-dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
   { id: 'donor-my-donations', label: 'My Donations', icon: 'gift' },
-  { id: 'donor-my-pledges', label: 'My Pledges', icon: 'calendar' },
+  { id: 'donor-my-pledges', label: 'My Pledges', icon: 'handshake' },
+  { id: 'donor-recurring', label: 'My Recurring Gifts', icon: 'refresh-cw' },
   { id: 'donor-my-impact', label: 'Impact & Reports', icon: 'bar-chart-3' },
   { id: 'donor-campaigns', label: 'Campaigns', icon: 'megaphone' },
-  { id: 'donor-ngo-partners', label: 'NGO Partners', icon: 'users' },
+  { id: 'donor-ngo-partners', label: 'NGO Partners', icon: 'building-2' },
   { id: 'donor-certificates', label: 'Certificates', icon: 'award' },
+  { id: 'donor-favorites', label: 'Favorites', icon: 'heart' },
   { id: 'donor-settings', label: 'Profile Settings', icon: 'user-cog' },
   { id: 'donor-payment-methods', label: 'Payment Methods', icon: 'credit-card' },
   { id: 'donor-notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'donor-help', label: 'Help & Support', icon: 'help-circle' }
+  { id: 'donor-help', label: 'Help & Support', icon: 'help-circle' },
 ];
 
 export const RECEIVER_NAV = [

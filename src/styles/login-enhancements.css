@@ -409,3 +409,102 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* =========================================================
+   Auth CTAs — same neat blue buttons as home page
+   ========================================================= */
+button.lp-btn,
+a.lp-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 0 1.4rem !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  background: #1268e8 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1.5px solid #1268e8 !important;
+  box-shadow: 0 2px 8px rgba(18, 104, 232, 0.22) !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  transform: none !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button.lp-btn:hover:not(:disabled),
+a.lp-btn:hover {
+  background: #0b57d0 !important;
+  border-color: #0b57d0 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(18, 104, 232, 0.28) !important;
+}
+
+button.lp-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.lp-btn svg,
+a.lp-btn svg {
+  color: #ffffff !important;
+  stroke: currentColor;
+}
+
+button.lp-btn.w-full,
+a.lp-btn.w-full {
+  width: 100%;
+}
+
+button.lp-btn.lp-btn--sm,
+a.lp-btn.lp-btn--sm {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 1.15rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+}
+
+button.lp-btn-outline,
+a.lp-btn-outline {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 1.15rem !important;
+  border-radius: 999px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #1268e8 !important;
+  -webkit-text-fill-color: #1268e8 !important;
+  border: 1.5px solid rgba(18, 104, 232, 0.35) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  transform: none !important;
+}
+
+button.lp-btn-outline:hover,
+a.lp-btn-outline:hover {
+  background: #eef5ff !important;
+  border-color: #1268e8 !important;
+  color: #0b57d0 !important;
+  -webkit-text-fill-color: #0b57d0 !important;
+}
+
+.role-auth-actions button.lp-btn,
+.role-auth-actions button.lp-btn-outline {
+  width: 100%;
+}

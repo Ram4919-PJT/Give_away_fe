@@ -280,8 +280,7 @@ function NgoRegistrationCard({ onNavigate }) {
             <button
               type="submit"
               disabled={submitting}
-              style={{ backgroundColor: '#1268E8' }}
-              className="w-full h-[52px] hover:bg-[#0f54be] text-white font-semibold text-base sm:text-[17px] rounded-[10px] shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50 border-none cursor-pointer"
+              className="lp-btn w-full"
             >
               <span>{submitting ? 'Creating account…' : 'Create NGO Account'}</span>
               <ArrowRight className="w-5 h-5" />

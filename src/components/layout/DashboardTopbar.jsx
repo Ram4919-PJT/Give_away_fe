@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Search, Bell, ChevronDown, User, Settings, LogOut, BadgeCheck } from 'lucide-react';
 import { getInitials } from '../../utils/receiverHelpers';
 import { isNgoVerified } from '../../context/AppContext';
+import { searchCausesAndNgos } from '../../api/coreClient';
 
 function HeaderLogo() {
   return (
@@ -52,14 +53,21 @@ export default function DashboardTopbar({
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const profileRef = useRef(null);
+  const searchRef = useRef(null);
+  const searchTimer = useRef(null);
 
   const routes = getRoleRoutes(role);
   const pageTitle = getPageTitle(navItems, location.pathname);
   const showVerified = isUserVerified(user, role);
+  const isDonor = role === 'donor';
 
   useEffect(() => {
     setProfileOpen(false);
+    setSearchResults(null);
+    setSearchQuery('');
   }, [location.pathname]);
 
   useEffect(() => {
@@ -82,13 +90,65 @@ export default function DashboardTopbar({
     };
   }, [profileOpen]);
 
+  useEffect(() => {
+    const onPointerDown = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchResults(null);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
+
+  useEffect(() => () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+  }, []);
+
   const goTo = (path) => {
     navigate(path);
     setProfileOpen(false);
   };
 
+  const runSearch = async (value) => {
+    const q = String(value || '').trim();
+    if (!isDonor || q.length < 2) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const data = await searchCausesAndNgos(q);
+      setSearchResults(data);
+    } catch {
+      setSearchResults({ programs: [], ngos: [], query: q, error: true });
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => runSearch(value), 280);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
+    runSearch(searchQuery);
+  };
+
+  const openProgram = (program) => {
+    setSearchResults(null);
+    setSearchQuery('');
+    navigate(`/dashboard/donor-donate-money?program_id=${program.program_id}`);
+  };
+
+  const openNgo = () => {
+    setSearchResults(null);
+    setSearchQuery('');
+    navigate('/dashboard/donor-ngo-partners');
   };
 
   return (
@@ -115,22 +175,50 @@ export default function DashboardTopbar({
             <HeaderLogo />
             <div className="dash-header__brand-text">
               <span className="dash-header__title">Give Away</span>
-              <span className="dash-header__subtitle">Aja Abayahastham</span>
+              <span className="dash-header__subtitle">Serve · Support · Uplift</span>
             </div>
           </div>
         </div>
 
         <div className="dash-header__center">
-          <form className="dash-header__search" onSubmit={handleSearch}>
+          <form className="dash-header__search" onSubmit={handleSearch} ref={searchRef}>
             <Search size={18} className="dash-header__search-icon" aria-hidden="true" />
             <input
               type="search"
               className="dash-header__search-input"
-              placeholder="Search donations, requests..."
+              placeholder={isDonor ? 'Search for causes, NGOs, campaigns...' : 'Search donations, requests...'}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search donations and requests"
+              onChange={handleSearchChange}
+              aria-label={isDonor ? 'Search causes, NGOs, and campaigns' : 'Search donations and requests'}
+              autoComplete="off"
             />
+            {isDonor && searchResults && (
+              <div className="dash-search-results" role="listbox" aria-label="Search results">
+                {searchLoading && (
+                  <p className="px-3 py-3 text-sm text-[#49638F]">Searching…</p>
+                )}
+                {!searchLoading && searchResults.error && (
+                  <p className="px-3 py-3 text-sm text-rose-600">Search failed. Try again.</p>
+                )}
+                {!searchLoading && !searchResults.error && !(searchResults.programs?.length || searchResults.ngos?.length) && (
+                  <p className="px-3 py-3 text-sm text-[#49638F]">No matches for “{searchResults.query}”.</p>
+                )}
+                {(searchResults.programs || []).map((p) => (
+                  <button key={`p-${p.program_id}`} type="button" role="option" onClick={() => openProgram(p)}>
+                    <span className="dash-search-results__type">Cause</span>
+                    <span className="dash-search-results__title">{p.program_name}</span>
+                    <span className="dash-search-results__meta">{p.category}</span>
+                  </button>
+                ))}
+                {(searchResults.ngos || []).map((n) => (
+                  <button key={`n-${n.ngo_id}`} type="button" role="option" onClick={openNgo}>
+                    <span className="dash-search-results__type">NGO</span>
+                    <span className="dash-search-results__title">{n.ngo_name}</span>
+                    <span className="dash-search-results__meta">{n.verification_status}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </form>
           <p className="dash-header__page-title" aria-hidden="true">{pageTitle}</p>
         </div>
@@ -158,17 +246,27 @@ export default function DashboardTopbar({
               aria-expanded={profileOpen}
               aria-haspopup="menu"
             >
-              <span className={`dash-header__avatar dash-header__avatar--${roleClass}`}>
-                {getInitials(user.name)}
-              </span>
+              {isDonor ? (
+                <img
+                  src="/assets/donor/Donor_Profile_Avatar.png"
+                  alt=""
+                  className="dash-header__avatar dash-header__avatar--img"
+                />
+              ) : (
+                <span className={`dash-header__avatar dash-header__avatar--${roleClass}`}>
+                  {getInitials(user.name)}
+                </span>
+              )}
               <span className="dash-header__profile-meta">
                 <span className="dash-header__profile-name">{user.name}</span>
-                {showVerified && (
+                {isDonor ? (
+                  <span className="dash-header__role-label">Donor</span>
+                ) : showVerified ? (
                   <span className="dash-header__verified">
                     <BadgeCheck size={12} strokeWidth={2.5} />
                     Verified
                   </span>
-                )}
+                ) : null}
               </span>
               <ChevronDown size={16} className="dash-header__chevron" aria-hidden="true" />
             </button>

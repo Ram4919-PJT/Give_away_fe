@@ -131,17 +131,12 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAFF] flex flex-col font-sans text-[#0B245B] overflow-x-hidden">
-      {/* 1. NAVBAR */}
+    <div className="landing-page min-h-screen bg-[#F7FAFF] flex flex-col font-sans text-[#0B245B] overflow-x-hidden">
       <GiveAwayHeader />
 
       <main className="flex-1">
-        {/* ==========================================
-            2. HERO SECTION
-           ========================================== */}
         <section id="hero" className="relative py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Left Content */}
             <div className="lg:col-span-6 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EEF5FF] text-[#1268E8] text-xs sm:text-sm font-semibold border border-[#DCE8FA]">
                 <Heart className="w-4 h-4 text-[#1268E8]" />
@@ -157,12 +152,11 @@ export default function LandingPage() {
                 Aja Abayahastham connects generous donors with verified individuals and communities in need — ensuring transparency, accountability, and meaningful change.
               </p>
 
-              {/* Exact CTA Buttons from Reference Screenshot (image_1.png) */}
               <div className="pt-2 flex flex-wrap items-center gap-4">
                 <button
                   type="button"
                   onClick={() => navigate('/donate')}
-                  className="h-12 sm:h-13 px-7 rounded-xl bg-[#0052FF] hover:bg-[#0B57D0] text-white font-bold text-base shadow-md shadow-blue-500/25 transition-all flex items-center gap-2.5 border-none cursor-pointer"
+                  className="lp-btn"
                 >
                   <Heart className="w-5 h-5 fill-white/20" />
                   <span>I Want to Donate</span>
@@ -171,7 +165,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/register/receiver')}
-                  className="h-12 sm:h-13 px-6 rounded-xl border border-[#0B57D0]/30 hover:border-[#0B57D0] bg-white hover:bg-[#EEF5FF] text-[#0B57D0] font-bold text-base transition-all flex items-center gap-2.5 cursor-pointer shadow-2xs"
+                  className="lp-btn"
                 >
                   <UserCheck className="w-5 h-5" />
                   <span>I Need Support</span>
@@ -343,7 +337,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/register')}
-                  className="inline-flex items-center gap-2 text-[#1268E8] font-bold text-base hover:underline cursor-pointer bg-transparent border-none p-0"
+                  className="lp-btn"
                 >
                   <span>Join Our Journey</span>
                   <ArrowRight className="w-5 h-5" />
@@ -428,7 +422,7 @@ export default function LandingPage() {
                 const el = document.getElementById('impact');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="h-10 px-5 rounded-lg border border-[#1268E8] text-[#1268E8] hover:bg-[#EEF5FF] font-semibold text-xs sm:text-sm transition whitespace-nowrap cursor-pointer bg-white"
+              className="lp-btn lp-btn--sm whitespace-nowrap"
             >
               See Our Impact →
             </button>
@@ -696,8 +690,7 @@ export default function LandingPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{ backgroundColor: '#1268E8' }}
-                  className="w-full h-12 hover:bg-[#0f54be] text-white font-semibold text-sm sm:text-base rounded-xl transition flex items-center justify-center gap-2 cursor-pointer border-none disabled:opacity-50"
+                  className="lp-btn w-full"
                 >
                   <span>{submitting ? 'Sending message…' : 'Send Message'}</span>
                   <Send className="w-4 h-4" />
@@ -816,10 +809,10 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Quick Links (NO DONATE LINK) */}
+          {/* Quick Links */}
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-[#0B245B]">Quick Links</h4>
-            <ul className="space-y-2 text-xs font-semibold text-[#49638F]">
+            <ul className="lp-footer-list space-y-2 text-xs font-semibold text-[#49638F]">
               <li>
                 <button
                   type="button"
@@ -827,7 +820,7 @@ export default function LandingPage() {
                     const el = document.getElementById('hero');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="hover:text-[#1268E8] transition bg-transparent border-none p-0 cursor-pointer"
+                  className="nav-link footer-link lp-footer-link"
                 >
                   Home
                 </button>
@@ -839,7 +832,7 @@ export default function LandingPage() {
                     const el = document.getElementById('about');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="hover:text-[#1268E8] transition bg-transparent border-none p-0 cursor-pointer"
+                  className="nav-link footer-link lp-footer-link"
                 >
                   About Us
                 </button>
@@ -851,7 +844,7 @@ export default function LandingPage() {
                     const el = document.getElementById('how-it-works');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="hover:text-[#1268E8] transition bg-transparent border-none p-0 cursor-pointer"
+                  className="nav-link footer-link lp-footer-link"
                 >
                   How It Works
                 </button>
@@ -863,7 +856,7 @@ export default function LandingPage() {
                     const el = document.getElementById('impact');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="hover:text-[#1268E8] transition bg-transparent border-none p-0 cursor-pointer"
+                  className="nav-link footer-link lp-footer-link"
                 >
                   Impact
                 </button>
@@ -875,7 +868,7 @@ export default function LandingPage() {
                     const el = document.getElementById('contact');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="hover:text-[#1268E8] transition bg-transparent border-none p-0 cursor-pointer"
+                  className="nav-link footer-link lp-footer-link"
                 >
                   Contact Us
                 </button>

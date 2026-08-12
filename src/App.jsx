@@ -20,6 +20,7 @@ import {
   DonorMyDonations, DonorDonationDetail, DonorMyImpact,
   DonorNotifications, DonorProfile, DonorSettings, DonorVerify
 } from './pages/donor/DonorPages';
+import DonorFeaturePlaceholder from './components/donor/DonorFeaturePlaceholder';
 import {
   ReceiverDashboard, ReceiverApply,
   ReceiverApplications, ReceiverApplicationDetail, ReceiverNotifications,
@@ -93,6 +94,14 @@ export default function App() {
           <Route path="donor-profile" element={<RoleGuard allowed={['donor']}><DonorProfile /></RoleGuard>} />
           <Route path="donor-settings" element={<RoleGuard allowed={['donor']}><DonorSettings /></RoleGuard>} />
           <Route path="donor-verify" element={<RoleGuard allowed={['donor']}><DonorVerify /></RoleGuard>} />
+          <Route path="donor-my-pledges" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-my-pledges" /></RoleGuard>} />
+          <Route path="donor-recurring" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-recurring" /></RoleGuard>} />
+          <Route path="donor-campaigns" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-campaigns" /></RoleGuard>} />
+          <Route path="donor-ngo-partners" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-ngo-partners" /></RoleGuard>} />
+          <Route path="donor-certificates" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-certificates" /></RoleGuard>} />
+          <Route path="donor-favorites" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-favorites" /></RoleGuard>} />
+          <Route path="donor-payment-methods" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-payment-methods" /></RoleGuard>} />
+          <Route path="donor-help" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-help" /></RoleGuard>} />
 
           {/* Receiver */}
           <Route path="receiver-dashboard" element={<RoleGuard allowed={['receiver']}><ReceiverDashboard /></RoleGuard>} />

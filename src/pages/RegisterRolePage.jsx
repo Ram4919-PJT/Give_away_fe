@@ -210,8 +210,9 @@ function CreateAccountCard({ selectedRole, setSelectedRole, onNavigate }) {
         {roles.map((role) => (
           <button
             key={role.key}
+            type="button"
             onClick={() => onNavigate(role.loginPath)}
-            className="w-[125px] sm:w-[135px] h-[42px] bg-white hover:bg-[#EEF5FF] border border-[#DCE8FA] hover:border-[#1268E8] rounded-full text-[#1268E8] font-semibold text-sm transition-all duration-150 flex items-center justify-center shadow-xs"
+            className="lp-btn-outline"
           >
             {role.key === 'ngo' ? 'NGO login' : `${role.key.charAt(0).toUpperCase() + role.key.slice(1)} login`}
           </button>

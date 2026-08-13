@@ -6,12 +6,6 @@ const COPY = {
     title: 'My Pledges',
     desc: 'Pledge tracking will appear here once pledge campaigns are enabled on the platform.',
   },
-  'donor-recurring': {
-    title: 'My Recurring Gifts',
-    desc: 'Recurring gift management is coming soon. You can still donate anytime from Donate Now.',
-    cta: 'Donate Now',
-    to: '/dashboard/donor-donate-money?recurring=1',
-  },
   'donor-campaigns': {
     title: 'Campaigns',
     desc: 'Browse active campaigns from Donate Money — campaign discovery is expanding soon.',

@@ -6,7 +6,6 @@ import {
   loadNgoProfiles,
   persistNgoProfile,
   deriveNgoUserFields,
-  ngoEmailMatches,
   VERIFICATIONS_STORAGE_KEY
 } from '../utils/ngoVerificationStore';
 import {
@@ -105,15 +104,6 @@ function appReducer(state, action) {
         ),
         ...(state.ngoNotifications || [])
       ];
-      const adminNotifications = [
-        makeNotification(
-          `adm-n-${Date.now()}`,
-          'New NGO Verification',
-          `${payload.name} submitted verification documents for review.`,
-          'shield'
-        ),
-        ...(state.adminNotifications || [])
-      ];
 
       persistNgoProfile(email, { verified: 'pending', verificationStatus: 'submitted', status: 'Registered NGO' });
 
@@ -132,7 +122,6 @@ function appReducer(state, action) {
         ...state,
         verifications,
         ngoNotifications,
-        adminNotifications,
         currentUser
       };
     }
@@ -142,156 +131,6 @@ function appReducer(state, action) {
       );
       persistVerifications(verifications);
       return { ...state, verifications };
-    }
-    case 'APPROVE_VERIFICATION': {
-      const { id, approvedBy = 'Platform Admin' } = action.payload;
-      const item = state.verifications.find((v) => v.id === id);
-      if (!item) return state;
-
-      const reviewedAt = new Date().toISOString().split('T')[0];
-      const verifications = state.verifications.map((v) =>
-        v.id === id
-          ? { ...v, status: 'Verified', reviewedAt, approvedBy, reviewer: approvedBy }
-          : v
-      );
-      persistVerifications(verifications);
-
-      let ngos = state.ngos;
-      let currentUser = state.currentUser;
-      let ngoNotifications = state.ngoNotifications || [];
-      let adminNotifications = state.adminNotifications || [];
-
-      if (item.type === 'NGO') {
-        ngos = (state.ngos || []).map((n) =>
-          ngoEmailMatches(n, item.email) ? { ...n, verified: true, status: 'Verified' } : n
-        );
-        persistNgoProfile(item.email, {
-          verified: true,
-          verificationStatus: 'approved',
-          status: 'Verified NGO',
-          verifiedAt: reviewedAt,
-          rejectionReason: undefined
-        });
-
-        if (state.currentUser?.role === 'ngo' && (state.currentUser.email || '').toLowerCase() === (item.email || '').toLowerCase()) {
-          currentUser = {
-            ...state.currentUser,
-            verified: true,
-            verificationStatus: 'approved',
-            status: 'Verified NGO',
-            rejectionReason: undefined,
-            verifiedAt: reviewedAt
-          };
-        }
-
-        ngoNotifications = [
-          makeNotification(
-            `nn-${Date.now()}`,
-            'Verification Approved',
-            'Congratulations! Your organization has been successfully verified.',
-            'shield-check'
-          ),
-          ...ngoNotifications
-        ];
-        adminNotifications = [
-          makeNotification(
-            `adm-n-${Date.now()}`,
-            'NGO Verification Approved',
-            `NGO Verification Approved Successfully — ${item.name}.`,
-            'circle-check'
-          ),
-          ...adminNotifications
-        ];
-      } else if (item.type === 'Donor') {
-        if (state.currentUser && (state.currentUser.email === item.email || state.currentUser.name === item.name)) {
-          currentUser = { ...state.currentUser, verified: true };
-        }
-      }
-
-      return {
-        ...state,
-        verifications,
-        ngos,
-        currentUser,
-        ngoNotifications,
-        adminNotifications
-      };
-    }
-    case 'REJECT_VERIFICATION': {
-      const { id, reason = 'Documents could not be verified. Please resubmit.' } = action.payload;
-      const item = state.verifications.find((v) => v.id === id);
-      if (!item) return state;
-
-      if (item.type !== 'NGO' && item.type !== 'Donor') {
-        const verifications = state.verifications.filter((v) => v.id !== id);
-        persistVerifications(verifications);
-        return { ...state, verifications };
-      }
-
-      const reviewedAt = new Date().toISOString().split('T')[0];
-      const verifications = state.verifications.map((v) =>
-        v.id === id
-          ? { ...v, status: 'Rejected', rejectionReason: reason, reviewedAt, reviewer: 'Platform Admin' }
-          : v
-      );
-      persistVerifications(verifications);
-
-      let currentUser = state.currentUser;
-      let ngoNotifications = state.ngoNotifications || [];
-      let adminNotifications = state.adminNotifications || [];
-
-      if (item.type === 'NGO') {
-        persistNgoProfile(item.email, {
-          verified: 'rejected',
-          verificationStatus: 'rejected',
-          status: 'Verification Rejected',
-          rejectionReason: reason
-        });
-
-        if (state.currentUser?.role === 'ngo' && (state.currentUser.email || '').toLowerCase() === (item.email || '').toLowerCase()) {
-          currentUser = {
-            ...state.currentUser,
-            verified: 'rejected',
-            verificationStatus: 'rejected',
-            status: 'Verification Rejected',
-            rejectionReason: reason
-          };
-        }
-
-        ngoNotifications = [
-          makeNotification(
-            `nn-${Date.now()}`,
-            'Verification Rejected',
-            `Your verification was rejected: ${reason}`,
-            'alert-circle'
-          ),
-          ...ngoNotifications
-        ];
-        adminNotifications = [
-          makeNotification(
-            `adm-n-${Date.now()}`,
-            'NGO Verification Rejected',
-            `${item.name} verification was rejected.`,
-            'x-circle'
-          ),
-          ...adminNotifications
-        ];
-      } else if (state.currentUser?.email === item.email) {
-        currentUser = {
-          ...state.currentUser,
-          verified: 'rejected',
-          verificationStatus: 'rejected',
-          rejectionReason: reason
-        };
-      }
-
-      return {
-        ...state,
-        verifications,
-        currentUser,
-        ngoNotifications,
-        adminNotifications
-      };
     }
     case 'UPDATE_NGO':
       return {
@@ -402,7 +241,7 @@ export function AppProvider({ children }) {
         const me = await getMe(token);
         if (!cancelled) {
           const user = mapIamUser(me);
-          if (!isUserAppRole(user.role)) {
+          if (!isUserAppRole(user.role) || (user.status && user.status !== 'ACTIVE')) {
             clearTokens();
             return;
           }
@@ -462,6 +301,10 @@ export function AppProvider({ children }) {
       clearTokens();
       throw new Error(ADMIN_PORTAL_MESSAGE);
     }
+    if (user.status && user.status !== 'ACTIVE') {
+      clearTokens();
+      throw new Error('Your account is awaiting admin approval. Please try again after approval.');
+    }
     dispatch({ type: 'LOGIN', payload: user });
     await refreshPlatformData(user.role);
     return user;
@@ -486,16 +329,29 @@ export function AppProvider({ children }) {
       role_name
     });
     saveTokens(tokens);
-    const me = await getMe(tokens.access_token);
-    const user = { ...mapIamUser(me), ...profile };
-    if (!isUserAppRole(user.role)) {
-      clearTokens();
-      throw new Error(ADMIN_PORTAL_MESSAGE);
+    try {
+      await coreClient.createVerificationRequest({
+        entity_type: role_name,
+        notes: `${role_name} registration pending admin approval`,
+      });
+    } catch {
+      /* verification queue is best-effort; account remains pending */
     }
-    dispatch({ type: 'LOGIN', payload: user });
-    await refreshPlatformData(user.role);
-    return user;
-  }, [refreshPlatformData]);
+    try {
+      await iamLogout(tokens.refresh_token);
+    } catch {
+      /* revoke best-effort */
+    }
+    clearTokens();
+    return {
+      pendingApproval: true,
+      name: full_name,
+      email,
+      role,
+      status: 'PENDING',
+      ...profile,
+    };
+  }, []);
 
   const logout = useCallback(async () => {
     setLogoutLoading(true);

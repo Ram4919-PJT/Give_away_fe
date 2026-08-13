@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage';
 import PortalMockupPage from './pages/PortalMockupPage';
 import MobileHomeMockup from './pages/MobileHomeMockup';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import RegisterRolePage from './pages/RegisterRolePage';
 import DonorRegisterPage from './pages/register/DonorRegisterPage';
 import ReceiverRegisterPage from './pages/register/ReceiverRegisterPage';
@@ -17,10 +18,13 @@ import DonateSuccessPage from './pages/donate/DonateSuccessPage';
 import { useApp } from './context/AppContext';
 import {
   DonorDashboard, DonorDonateMoney, DonorDonateItem,
-  DonorMyDonations, DonorDonationDetail, DonorMyImpact,
+  DonorMyDonations, DonorDonationDetail,
   DonorNotifications, DonorProfile, DonorSettings, DonorVerify
 } from './pages/donor/DonorPages';
 import DonorFeaturePlaceholder from './components/donor/DonorFeaturePlaceholder';
+import MyPledgesView from './components/donor/my-pledges/MyPledgesView';
+import MyRecurringGiftsView from './components/donor/my-recurring-gifts/MyRecurringGiftsView';
+import MyImpactView from './components/donor/my-impact/MyImpactView';
 import {
   ReceiverDashboard, ReceiverApply,
   ReceiverApplications, ReceiverApplicationDetail, ReceiverNotifications,
@@ -54,7 +58,7 @@ function RoleGuard({ allowed, children }) {
 export default function App() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard');
-  const isAuthPage = ['/login', '/register'].some((p) => location.pathname === p)
+  const isAuthPage = ['/login', '/register', '/forgot-password'].some((p) => location.pathname === p)
     || location.pathname.startsWith('/register/')
     || location.pathname.startsWith('/donate');
   const isMobileMockup = location.pathname === '/mobile-home';
@@ -69,6 +73,7 @@ export default function App() {
         <Route path="/portal-mockup" element={<PortalMockupPage />} />
         <Route path="/mobile-home" element={<MobileHomeMockup />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterRolePage />} />
         <Route path="/register/donor" element={<DonorRegisterPage />} />
         <Route path="/register/receiver" element={<ReceiverRegisterPage />} />
@@ -89,13 +94,13 @@ export default function App() {
           <Route path="donor-donate-item" element={<RoleGuard allowed={['donor']}><DonorDonateItem /></RoleGuard>} />
           <Route path="donor-my-donations" element={<RoleGuard allowed={['donor']}><DonorMyDonations /></RoleGuard>} />
           <Route path="donor-donation-detail/:id" element={<RoleGuard allowed={['donor']}><DonorDonationDetail /></RoleGuard>} />
-          <Route path="donor-my-impact" element={<RoleGuard allowed={['donor']}><DonorMyImpact /></RoleGuard>} />
+          <Route path="donor-my-impact" element={<RoleGuard allowed={['donor']}><MyImpactView /></RoleGuard>} />
           <Route path="donor-notifications" element={<RoleGuard allowed={['donor']}><DonorNotifications /></RoleGuard>} />
           <Route path="donor-profile" element={<RoleGuard allowed={['donor']}><DonorProfile /></RoleGuard>} />
           <Route path="donor-settings" element={<RoleGuard allowed={['donor']}><DonorSettings /></RoleGuard>} />
           <Route path="donor-verify" element={<RoleGuard allowed={['donor']}><DonorVerify /></RoleGuard>} />
-          <Route path="donor-my-pledges" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-my-pledges" /></RoleGuard>} />
-          <Route path="donor-recurring" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-recurring" /></RoleGuard>} />
+          <Route path="donor-my-pledges" element={<RoleGuard allowed={['donor']}><MyPledgesView /></RoleGuard>} />
+          <Route path="donor-recurring" element={<RoleGuard allowed={['donor']}><MyRecurringGiftsView /></RoleGuard>} />
           <Route path="donor-campaigns" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-campaigns" /></RoleGuard>} />
           <Route path="donor-ngo-partners" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-ngo-partners" /></RoleGuard>} />
           <Route path="donor-certificates" element={<RoleGuard allowed={['donor']}><DonorFeaturePlaceholder featureId="donor-certificates" /></RoleGuard>} />

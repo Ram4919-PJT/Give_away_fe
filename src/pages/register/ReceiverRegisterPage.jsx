@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
-import { getDashboardPathForRole } from '../../utils/roleMap';
 
 // ==========================================
 // 1. BACKGROUND DECORATIONS COMPONENT
@@ -127,15 +126,15 @@ function ReceiverRegistrationCard({ onNavigate }) {
 
     setSubmitting(true);
     try {
-      const user = await register({
+      await register({
         role: 'receiver',
         full_name: fullName.trim(),
         email: email.trim(),
         mobile: mobile.trim(),
         password
       });
-      showToast('Receiver account created! Welcome to Give Away.', 'success');
-      onNavigate(getDashboardPathForRole(user.role));
+      showToast('Account created. Please wait for admin approval before signing in.', 'success');
+      onNavigate('/login');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {

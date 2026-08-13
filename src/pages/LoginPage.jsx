@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, ArrowLeft, ShieldCheck, UserCheck, Quote } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../components/ui/Toast';
@@ -47,7 +47,8 @@ function BackgroundDecorations() {
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -187,7 +188,7 @@ export default function LoginPage() {
               Sign in to your account
             </h2>
             <p className="text-[#475569] text-xs sm:text-sm font-medium text-center leading-relaxed max-w-sm mx-auto mb-6 sm:mb-8">
-              Use the email and password registered with the platform. Your role is determined automatically after login.
+              Use the email and password registered with the platform. New accounts can sign in only after admin approval.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -231,7 +232,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0B57D0] transition bg-transparent border-none p-1 cursor-pointer flex items-center justify-center"
+                    className="auth-icon-btn"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -243,8 +244,8 @@ export default function LoginPage() {
               <div className="flex justify-end pt-0.5">
                 <button
                   type="button"
-                  onClick={() => showToast('Password reset instructions will be sent to your email.', 'info')}
-                  className="text-xs sm:text-sm font-bold text-[#0B57D0] hover:underline bg-transparent border-none p-0 cursor-pointer"
+                  onClick={() => navigate('/forgot-password', { state: { email } })}
+                  className="auth-text-link"
                 >
                   Forgot Password?
                 </button>

@@ -1,5 +1,11 @@
-import { apiRequest } from './client';
+import { apiRequest, getApiBase, parseErrorDetail } from './client';
 import { getMe } from './iamClient';
+import {
+  clearTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  saveTokens,
+} from './tokenStorage';
 
 async function currentUserId() {
   const me = await getMe();
@@ -154,6 +160,230 @@ export async function listPrograms() {
 export async function getDonorDashboard(period = 'year') {
   const q = encodeURIComponent(period || 'year');
   return apiRequest(`/core/donors/me/dashboard?period=${q}`);
+}
+
+export async function getMyImpact(period = 'year') {
+  const q = encodeURIComponent(period || 'year');
+  return apiRequest(`/core/donors/me/impact?period=${q}`);
+}
+
+export async function downloadImpactReport() {
+  const API_BASE = getApiBase();
+  const path = '/core/donors/me/impact/report/download';
+
+  async function doFetch(token) {
+    return fetch(`${API_BASE}${path}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'text/html,application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  }
+
+  let response = await doFetch(getStoredAccessToken());
+
+  if (response.status === 401) {
+    const refreshToken = getStoredRefreshToken();
+    if (!refreshToken) throw new Error('Session expired');
+    const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const refreshData = await refreshRes.json().catch(() => ({}));
+    if (!refreshRes.ok) {
+      clearTokens();
+      throw new Error(parseErrorDetail(refreshData));
+    }
+    saveTokens(refreshData);
+    response = await doFetch(refreshData.access_token);
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(parseErrorDetail(data) || 'Unable to download impact report.');
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] || 'impact-report.html';
+  return { blob, filename };
+}
+
+export async function getMyDonations({
+  period = 'year',
+  tab = 'all',
+  category = '',
+  page = 1,
+  pageSize = 20,
+} = {}) {
+  const params = new URLSearchParams({
+    period: period || 'year',
+    tab: tab || 'all',
+    page: String(page || 1),
+    page_size: String(pageSize || 20),
+  });
+  if (category && category !== 'all') {
+    params.set('category', category);
+  }
+  return apiRequest(`/core/donors/me/donations?${params.toString()}`);
+}
+
+export async function downloadDonationReceipt(donationKey) {
+  const API_BASE = getApiBase();
+  const path = `/core/donors/me/donations/${encodeURIComponent(donationKey)}/receipt`;
+
+  async function doFetch(token) {
+    return fetch(`${API_BASE}${path}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'text/html,application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  }
+
+  let response = await doFetch(getStoredAccessToken());
+
+  if (response.status === 401) {
+    const refreshToken = getStoredRefreshToken();
+    if (!refreshToken) throw new Error('Session expired');
+    const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const refreshData = await refreshRes.json().catch(() => ({}));
+    if (!refreshRes.ok) {
+      clearTokens();
+      throw new Error(parseErrorDetail(refreshData));
+    }
+    saveTokens(refreshData);
+    response = await doFetch(refreshData.access_token);
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(parseErrorDetail(data) || 'Unable to download receipt.');
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] || `receipt-${donationKey}.html`;
+  return { blob, filename };
+}
+
+export async function getMyRecurringGifts({
+  period = 'all',
+  tab = 'all',
+  category = '',
+  sort = 'next_payment',
+  page = 1,
+  pageSize = 20,
+} = {}) {
+  const params = new URLSearchParams({
+    period: period || 'all',
+    tab: tab || 'all',
+    sort: sort || 'next_payment',
+    page: String(page || 1),
+    page_size: String(pageSize || 20),
+  });
+  if (category && category !== 'all') {
+    params.set('category', category);
+  }
+  return apiRequest(`/core/donors/me/recurring-gifts?${params.toString()}`);
+}
+
+export async function updateRecurringGift(giftId, payload) {
+  return apiRequest(`/core/donors/me/recurring-gifts/${giftId}`, {
+    method: 'PATCH',
+    body: payload,
+  });
+}
+
+export async function pauseRecurringGift(giftId) {
+  return apiRequest(`/core/donors/me/recurring-gifts/${giftId}/pause`, {
+    method: 'POST',
+  });
+}
+
+export async function resumeRecurringGift(giftId) {
+  return apiRequest(`/core/donors/me/recurring-gifts/${giftId}/resume`, {
+    method: 'POST',
+  });
+}
+
+export async function cancelRecurringGift(giftId) {
+  return apiRequest(`/core/donors/me/recurring-gifts/${giftId}/cancel`, {
+    method: 'POST',
+  });
+}
+
+export async function getMyPledges({
+  period = 'year',
+  tab = 'all',
+  category = '',
+  page = 1,
+  pageSize = 20,
+} = {}) {
+  const params = new URLSearchParams({
+    period: period || 'year',
+    tab: tab || 'all',
+    page: String(page || 1),
+    page_size: String(pageSize || 20),
+  });
+  if (category && category !== 'all') {
+    params.set('category', category);
+  }
+  return apiRequest(`/core/donors/me/pledges?${params.toString()}`);
+}
+
+export async function downloadPledgesSummary() {
+  const API_BASE = getApiBase();
+  const path = '/core/donors/me/pledges/summary/download';
+
+  async function doFetch(token) {
+    return fetch(`${API_BASE}${path}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'text/html,application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  }
+
+  let response = await doFetch(getStoredAccessToken());
+
+  if (response.status === 401) {
+    const refreshToken = getStoredRefreshToken();
+    if (!refreshToken) throw new Error('Session expired');
+    const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const refreshData = await refreshRes.json().catch(() => ({}));
+    if (!refreshRes.ok) {
+      clearTokens();
+      throw new Error(parseErrorDetail(refreshData));
+    }
+    saveTokens(refreshData);
+    response = await doFetch(refreshData.access_token);
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(parseErrorDetail(data) || 'Unable to download pledge summary.');
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] || 'pledge-summary.html';
+  return { blob, filename };
 }
 
 export async function searchCausesAndNgos(query) {

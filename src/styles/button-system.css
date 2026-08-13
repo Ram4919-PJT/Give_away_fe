@@ -32,7 +32,6 @@ input[type="button"],
 .btn-sm-card,
 .login-submit,
 .auth-submit-btn,
-.admin-btn,
 .btn-approve,
 .btn-reject,
 .btn-verify-cta,
@@ -84,7 +83,6 @@ button[disabled] {
 /* --- Sizes --- */
 .btn-sm,
 .btn-sm-card,
-.admin-btn,
 .btn-outline.btn-sm,
 .btn-ghost.btn-sm {
   min-height: var(--btn-height-sm);
@@ -147,12 +145,6 @@ button[disabled] {
 .auth-btn-teal.auth-submit-btn {
   background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%) !important;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32) !important;
-}
-
-.auth-btn-admin.login-submit,
-.auth-btn-admin.auth-submit-btn {
-  background: linear-gradient(135deg, #475569 0%, #1E293B 100%) !important;
-  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.32) !important;
 }
 
 /* --- Secondary / blue outline --- */
@@ -245,8 +237,7 @@ button[disabled] {
 }
 
 /* --- Success / danger actions --- */
-.btn-approve,
-.admin-btn-approve {
+.btn-approve {
   background: linear-gradient(135deg, #1268E8 0%, #0F54BE 100%) !important;
   color: #FFFFFF !important;
   border: none !important;
@@ -254,8 +245,7 @@ button[disabled] {
 }
 
 .btn-reject,
-.btn-danger,
-.admin-btn-reject {
+.btn-danger {
   background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important;
   color: #FFFFFF !important;
   border: none !important;
@@ -263,16 +253,8 @@ button[disabled] {
 }
 
 .btn-approve:hover:not(:disabled),
-.admin-btn-approve:hover:not(:disabled),
-.btn-reject:hover:not(:disabled),
-.admin-btn-reject:hover:not(:disabled) {
+.btn-reject:hover:not(:disabled) {
   transform: translateY(-1px);
-}
-
-.admin-btn {
-  min-height: var(--btn-height-sm);
-  padding: 0.45rem 0.875rem;
-  font-size: var(--btn-font-sm);
 }
 
 /* --- Verify CTA (inside green banner) --- */

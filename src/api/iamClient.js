@@ -90,3 +90,23 @@ export async function verifyOtp(mobile, otpCode, purpose = 'DONATION_LOGIN') {
     });
   });
 }
+
+export async function forgotPassword(email) {
+  return apiRequest('/auth/password/forgot', {
+    method: 'POST',
+    body: { email: String(email || '').trim().toLowerCase() },
+    auth: false,
+  });
+}
+
+export async function resetPassword({ email, otp_code, new_password }) {
+  return apiRequest('/auth/password/reset', {
+    method: 'POST',
+    body: {
+      email: String(email || '').trim().toLowerCase(),
+      otp_code: String(otp_code || '').trim(),
+      new_password,
+    },
+    auth: false,
+  });
+}

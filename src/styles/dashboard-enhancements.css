@@ -319,7 +319,6 @@ body.dashboard-menu-open {
 .dash-header__avatar--donor { background: linear-gradient(135deg, #22C55E, #16A34A); }
 .dash-header__avatar--receiver { background: linear-gradient(135deg, #3B82F6, #2563EB); }
 .dash-header__avatar--ngo { background: linear-gradient(135deg, #10B981, #059669); }
-.dash-header__avatar--admin { background: linear-gradient(135deg, #64748B, #334155); }
 
 .dash-header__profile-meta {
   display: flex;
@@ -560,16 +559,6 @@ body.dashboard-menu-open {
   color: #111827;
 }
 
-.dashboard-layout--admin .dashboard-drawer-close {
-  background: #374151;
-  color: #9CA3AF;
-}
-
-.dashboard-layout--admin .dashboard-drawer-close:hover {
-  background: #4B5563;
-  color: #F9FAFB;
-}
-
 /* Override legacy sidebar space-between (pushed nav to bottom) */
 .dashboard-layout-react .dashboard-sidebar,
 .dashboard-sidebar--drawer {
@@ -676,11 +665,6 @@ body.dashboard-menu-open {
   background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
 }
 
-.sidebar-user-card--admin {
-  border-color: #374151;
-  background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
-}
-
 .sidebar-user-avatar {
   width: 44px;
   height: 44px;
@@ -706,10 +690,6 @@ body.dashboard-menu-open {
 
 .sidebar-user-card--ngo .sidebar-user-avatar {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-}
-
-.sidebar-user-card--admin .sidebar-user-avatar {
-  background: linear-gradient(135deg, #64748B 0%, #334155 100%);
 }
 
 .sidebar-user-info {
@@ -764,19 +744,6 @@ body.dashboard-menu-open {
 .sidebar-user-card--ngo .sidebar-user-role {
   background: #DCFCE7;
   color: #059669;
-}
-
-.sidebar-user-card--admin .sidebar-user-name {
-  color: #F9FAFB;
-}
-
-.sidebar-user-card--admin .sidebar-user-email {
-  color: #9CA3AF;
-}
-
-.sidebar-user-card--admin .sidebar-user-role {
-  background: rgba(134, 239, 172, 0.15);
-  color: #86EFAC;
 }
 
 .sidebar-nav-label {
@@ -909,13 +876,6 @@ body.dashboard-menu-open {
   box-shadow: none !important;
 }
 
-.dashboard-layout--admin .sidebar-item.active .sidebar-link {
-  background: rgba(34, 197, 94, 0.15) !important;
-  color: #86EFAC !important;
-  font-weight: 600;
-  box-shadow: none !important;
-}
-
 .dashboard-sidebar-footer {
   flex-shrink: 0;
   padding: 0.65rem;
@@ -944,52 +904,6 @@ body.dashboard-menu-open {
   transform: none !important;
 }
 
-.dashboard-layout--admin .sidebar-theme-btn {
-  color: #9CA3AF !important;
-}
-
-.dashboard-layout--admin .sidebar-theme-btn:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: #F9FAFB !important;
-}
-
-.dashboard-layout--admin .dashboard-sidebar {
-  background: #111827 !important;
-  border-right-color: #1F2937;
-  color: #E5E7EB;
-}
-
-.dashboard-layout--admin .dashboard-sidebar-brand {
-  border-bottom-color: #1F2937;
-}
-
-.dashboard-layout--admin .dashboard-sidebar-brand-name {
-  color: #F9FAFB;
-}
-
-.dashboard-layout--admin .dashboard-sidebar-brand-sub,
-.dashboard-layout--admin .dashboard-sidebar-title {
-  color: #6B7280;
-}
-
-.dashboard-layout--admin .dashboard-sidebar-sub {
-  color: #E5E7EB;
-}
-
-.dashboard-layout--admin .dashboard-sidebar-footer {
-  background: #0F172A;
-  border-top-color: #1F2937;
-}
-
-.dashboard-layout--admin .sidebar-link {
-  color: #9CA3AF;
-}
-
-.dashboard-layout--admin .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #F9FAFB;
-}
-
 .sidebar-logout-btn {
   background: transparent !important;
   background-color: transparent !important;
@@ -1006,15 +920,6 @@ body.dashboard-menu-open {
   color: #DC2626 !important;
   box-shadow: none !important;
   transform: none !important;
-}
-
-.dashboard-layout--admin .sidebar-logout-btn {
-  color: #FCA5A5 !important;
-}
-
-.dashboard-layout--admin .sidebar-logout-btn:hover {
-  background: rgba(239, 68, 68, 0.12) !important;
-  color: #FECACA !important;
 }
 
 /* Main content area — stays rendered beneath overlay */

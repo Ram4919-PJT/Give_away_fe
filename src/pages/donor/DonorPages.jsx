@@ -29,6 +29,7 @@ import TrustFooter from '../../components/donor/donate-money/TrustFooter';
 import DonorSettingsPage from '../../components/donor/DonorSettingsPage';
 import DonorProfilePage from '../../components/donor/DonorProfilePage';
 import DonorDashboardView from '../../components/donor/dashboard/DonorDashboardView';
+import MyDonationsView from '../../components/donor/my-donations/MyDonationsView';
 import {
   getDonorDonations, getDonorStats, normalizeDonorStatus, getJourneyIndex,
   getDonorInitials, statusBadgeClass, formatCurrency, maskBeneficiaryName,
@@ -397,42 +398,7 @@ export function DonorDonateItem() {
 }
 
 export function DonorMyDonations() {
-  const { donations, currentUser, platformLoading } = useApp();
-  const navigate = useNavigate();
-  const list = getDonorDonations(donations, currentUser);
-
-  return (
-    <div className="donor-page donor-module page-route">
-      <DonorPageHeader title="My Donations" subtitle="Track every contribution to AJA Abayahastham and its journey." />
-      {platformLoading && !list.length ? (
-        <DonorEmpty icon={Gift} title="Loading donations…" desc="Fetching your contribution history." />
-      ) : list.length ? (
-        <div className="donor-donation-list">
-          {list.map((d) => (
-            <article key={d.id} className="donor-donation-card donor-donation-card--modern">
-              <div className="donor-donation-card-visual">
-                {d.type === 'Financial' ? '💰' : '📦'}
-              </div>
-              <div className="donor-donation-card-body">
-                <div className="donor-donation-card-head">
-                  <div>
-                    <strong>{d.id}</strong>
-                    <span>{d.type} · {d.date}</span>
-                  </div>
-                  <span className={`donor-status-badge ${statusBadgeClass(d.status)}`}>{normalizeDonorStatus(d.status)}</span>
-                </div>
-                <p>{d.type === 'Financial' ? formatCurrency(d.amount) : d.category || d.fund} — {d.details}</p>
-                <DonationTimeline status={d.status} compact />
-                <button type="button" className="btn-sm-card" onClick={() => navigate(`/dashboard/donor-donation-detail/${d.id}`)}>View Details</button>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <DonorEmpty icon={Gift} title="No Donations Yet" desc="Your giving journey with AJA Abayahastham starts here." actionLabel="Make Your First Donation" onAction={() => navigate('/dashboard/donor-donate-money')} />
-      )}
-    </div>
-  );
+  return <MyDonationsView />;
 }
 
 export function DonorDonationDetail() {
@@ -485,93 +451,7 @@ export function DonorDonationDetail() {
   );
 }
 
-export function DonorMyImpact() {
-  const { donations, currentUser } = useApp();
-  const navigate = useNavigate();
-
-  if (!isRoleVerified(currentUser)) {
-    return (
-      <div className="donor-page donor-module page-route">
-        <div className="ngo-locked-overlay">
-          <Lock size={48} />
-          <h2>My Impact Locked</h2>
-          <p>Complete donor verification to unlock premium impact analytics and your verified badge.</p>
-          <button type="button" className="login-submit" onClick={() => navigate('/dashboard/donor-verify')}>
-            Complete Verification
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = getDonorStats(donations, currentUser);
-  const list = getDonorDonations(donations, currentUser);
-  const completed = list.filter((d) => normalizeDonorStatus(d.status) === 'Completed');
-
-  return (
-    <div className="donor-page donor-module page-route">
-      <DonorPageHeader title="My Impact" subtitle="See how your generosity through AJA Abayahastham creates real change." />
-
-      <div className="donor-stats-grid donor-stats-grid--4">
-        {[
-          [Gift, 'Total Donations', stats.totalDonations],
-          [Package, 'Items Donated', stats.itemsDonated],
-          [IndianRupee, 'Money Donated', formatCurrency(stats.moneyDonated)],
-          [CheckCircle, 'Completed', stats.completedDonations]
-        ].map(([Icon, label, val]) => (
-          <article key={label} className="donor-stat-card donor-stat-card--impact">
-            <Icon size={18} />
-            <p className="donor-stat-label">{label}</p>
-            <p className="donor-stat-value">{val}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="donor-section">
-        <h2 className="donor-section-title">Donation History</h2>
-        {list.length ? list.map((d) => (
-          <article key={d.id} className="donor-impact-history-card">
-            <div className="donor-impact-history-head">
-              <strong>{d.id}</strong>
-              <span className={`donor-status-badge ${statusBadgeClass(d.status)}`}>{normalizeDonorStatus(d.status)}</span>
-            </div>
-            <p>{d.type} · {d.type === 'Financial' ? formatCurrency(d.amount) : d.category} · {d.date}</p>
-            <DonationTimeline status={d.status} compact />
-            <button type="button" className="btn-outline btn-sm" onClick={() => navigate(`/dashboard/donor-donation-detail/${d.id}`)}>View Details</button>
-          </article>
-        )) : (
-          <DonorEmpty emoji="✨" title="No Impact Yet" desc="Complete a donation to see your impact journey here." actionLabel="Donate Now" onAction={() => navigate('/dashboard/donor-donate-money')} />
-        )}
-      </div>
-
-      {completed.length > 0 && (
-        <div className="donor-section">
-          <h2 className="donor-section-title">Completed Donations</h2>
-          <p className="donor-section-subtitle">Donations that reached beneficiaries through AJA Abayahastham.</p>
-          {completed.map((d) => (
-            <article key={d.id} className="donor-impact-history-card">
-              <div className="donor-impact-history-head">
-                <strong>{d.id}</strong>
-                <span className={`donor-status-badge ${statusBadgeClass(d.status)}`}>{normalizeDonorStatus(d.status)}</span>
-              </div>
-              <p>{d.type} · {d.type === 'Financial' ? formatCurrency(d.amount) : d.category || d.fund} · {d.date}</p>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {completed.length === 0 && (
-        <DonorEmpty emoji="✨" title="No completed donations yet" desc="When your donations are delivered, they will appear here." actionLabel="Donate Now" onAction={() => navigate('/dashboard/donor-donate-money')} />
-      )}
-
-      <div className="donor-thank-you-banner">
-        <Star size={28} />
-        <h2>Thank you for making a difference.</h2>
-        <p>Because of your generosity, families have received meaningful support through AJA Abayahastham. Every contribution creates hope.</p>
-      </div>
-    </div>
-  );
-}
+export { default as DonorMyImpact } from '../../components/donor/my-impact/MyImpactView';
 
 export function DonorNotifications() {
   const { notifications, markNotificationReadRemote, platformLoading } = useApp();

@@ -4,7 +4,6 @@ import { Building2, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Shiel
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
 import { persistNgoProfile } from '../../utils/ngoVerificationStore';
-import { getDashboardPathForRole } from '../../utils/roleMap';
 
 // ==========================================
 // 1. BACKGROUND DECORATIONS COMPONENT (CLEAN BACKGROUND)
@@ -80,7 +79,7 @@ function NgoRegistrationCard({ onNavigate }) {
 
     setSubmitting(true);
     try {
-      const user = await register({
+      await register({
         role: 'ngo',
         full_name: orgName.trim(),
         email: email.trim(),
@@ -88,20 +87,20 @@ function NgoRegistrationCard({ onNavigate }) {
         password,
         profile: {
           verified: false,
-          verificationStatus: 'registered',
-          status: 'Registered NGO'
+          verificationStatus: 'submitted',
+          status: 'Pending Admin Approval'
         }
       });
 
       persistNgoProfile(email.trim(), {
         verified: false,
-        verificationStatus: 'registered',
-        status: 'Registered NGO',
-        name: user.name
+        verificationStatus: 'submitted',
+        status: 'Pending Admin Approval',
+        name: orgName.trim()
       });
 
-      showToast('NGO account created successfully!', 'success');
-      onNavigate(getDashboardPathForRole(user.role));
+      showToast('NGO account created. Please wait for admin approval before signing in.', 'success');
+      onNavigate('/login');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {

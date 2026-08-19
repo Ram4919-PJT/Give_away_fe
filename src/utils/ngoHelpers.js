@@ -65,34 +65,23 @@ export function getBeneficiaryCategoryStats(beneficiaries) {
 
 export function buildActivityTimeline(requests, notifications) {
   const items = [];
-  const latestReq = requests[0];
-  const latestNotif = (notifications || [])[0];
-
-  if (latestReq) {
+  (requests || []).slice(0, 3).forEach((req, index) => {
     items.push({
-      id: 'act-req',
-      label: 'Request Submitted',
-      detail: `${latestReq.id} · ${latestReq.category || latestReq.type}`,
-      time: 'Today',
-      icon: 'send'
+      id: `act-req-${req.id || index}`,
+      label: req.status === 'Approved' ? 'Request approved' : 'Request submitted',
+      detail: `${req.id} · ${req.category || req.type}`,
+      at: req.appliedDate || null,
+      icon: 'send',
     });
-  }
-  if (latestNotif) {
-    items.push({
-      id: 'act-notif',
-      label: latestNotif.title,
-      detail: latestNotif.message,
-      time: latestNotif.time?.includes('hour') ? 'Today' : latestNotif.time || 'Yesterday',
-      icon: latestNotif.icon || 'bell'
-    });
-  }
-  items.push({
-    id: 'act-approved',
-    label: 'Donation Approved',
-    detail: 'NGO-REQ-002 financial assistance approved.',
-    time: '2 Days Ago',
-    icon: 'circle-check'
   });
-
-  return items.slice(0, 4);
+  (notifications || []).slice(0, 2).forEach((notif, index) => {
+    items.push({
+      id: `act-notif-${notif.id || index}`,
+      label: notif.title,
+      detail: notif.message,
+      at: notif.created_at || null,
+      icon: notif.icon || 'bell',
+    });
+  });
+  return items.slice(0, 6);
 }

@@ -3,11 +3,85 @@
 .dashboard-layout.dashboard-layout-react {
   display: flex !important;
   flex-direction: column;
-  grid-template-columns: unset !important;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
-.dashboard-layout--hamburger {
+/* Desktop sidebar layouts use a real two-column grid — sidebar owns its column */
+.dashboard-layout.dashboard-layout-react .dashboard-sidebar--desktop {
+  display: none;
+}
+
+.dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar > .dashboard-main-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar > .dashboard-main-wrap > .dashboard-content {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar {
+    display: grid !important;
+    grid-template-columns: 268px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar > .dashboard-sidebar--desktop {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex !important;
+    flex-direction: column;
+    width: 268px;
+    min-width: 268px;
+    max-width: 268px;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    position: relative;
+    transform: none !important;
+    pointer-events: auto !important;
+    z-index: 1;
+    border-right: 1px solid #E5E7EB;
+    background: #FFFFFF !important;
+  }
+
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar > .dashboard-main-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar .dashboard-sidebar--drawer {
+    display: none !important;
+  }
+
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar .dashboard-menu-backdrop {
+    display: none !important;
+  }
+
+  .dashboard-layout.dashboard-layout-react.dashboard-layout--with-sidebar .dash-header__menu-btn {
+    display: none;
+  }
+}
+
+.dashboard-layout--hamburger:not(.dashboard-layout--with-sidebar) {
   grid-template-columns: unset !important;
 }
 
@@ -36,9 +110,9 @@ body.dashboard-menu-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
-  min-height: 72px;
-  padding: 16px 24px;
+  gap: 1rem;
+  min-height: 60px;
+  padding: 10px 20px;
 }
 
 .dash-header__left,
@@ -74,6 +148,53 @@ body.dashboard-menu-open {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.dash-header__page-title--visible {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0B245B;
+  letter-spacing: -0.02em;
+}
+
+/* Compact header when desktop sidebar is present (donor / receiver) */
+.dash-header--compact .dash-header__inner {
+  min-height: 64px;
+  padding: 12px 20px;
+}
+
+.dash-header--compact .dash-header__center .dash-header__page-title {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-layout--with-sidebar .dash-header--compact .dash-header__center {
+    flex: 1;
+    max-width: min(520px, 42vw);
+    margin: 0;
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+  }
+
+  .dashboard-layout--with-sidebar .dash-header--compact .dash-header__left {
+    flex-shrink: 0;
+    max-width: 220px;
+  }
+
+  .dashboard-layout--with-sidebar .dash-header--compact .dash-header__profile-meta {
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dash-header--compact .dash-header__center {
+    display: none;
+  }
+
+  .dash-header--compact .dash-header__page-title--visible {
+    max-width: 42vw;
+  }
 }
 
 /* Hamburger */
@@ -854,22 +975,17 @@ body.dashboard-menu-open {
   color: #9CA3AF;
 }
 
-/* Role accent — active nav item */
-.dashboard-layout--donor .sidebar-item.active .sidebar-link {
-  background: #ECFDF5 !important;
-  color: #16A34A !important;
-  font-weight: 600;
-  box-shadow: none !important;
-}
-
-.dashboard-layout--receiver .sidebar-item.active .sidebar-link {
+/* Role accent — active nav item (non-donor; donor uses blue in donor-dashboard.css) */
+.dashboard-layout--receiver .sidebar-item.active .sidebar-link,
+.dashboard-layout--receiver .sidebar-link.is-active {
   background: #EFF6FF !important;
   color: #2563EB !important;
   font-weight: 600;
   box-shadow: none !important;
 }
 
-.dashboard-layout--ngo .sidebar-item.active .sidebar-link {
+.dashboard-layout--ngo .sidebar-item.active .sidebar-link,
+.dashboard-layout--ngo .sidebar-link.is-active {
   background: #ECFDF5 !important;
   color: #16A34A !important;
   font-weight: 600;

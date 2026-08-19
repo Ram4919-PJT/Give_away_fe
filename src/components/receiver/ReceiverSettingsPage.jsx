@@ -1,26 +1,35 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell, ClipboardList, Lock, SlidersHorizontal, Shield, Database,
-  HelpCircle, AlertTriangle, KeyRound, MonitorSmartphone, ShieldCheck,
-  Download, FileSpreadsheet, History, RotateCcw, BookOpen,
-  Flag, LifeBuoy, FileText
+  HelpCircle, AlertTriangle, KeyRound, MonitorSmartphone,
+  Download, RotateCcw, Loader2, X, LogOut, ExternalLink,
 } from 'lucide-react';
 import { useApp, isRoleVerified } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
+import { useReceiverSettings } from '../../hooks/useReceiverSettings';
+import {
+  changePassword,
+  deactivateAccount,
+  deleteAccount,
+  logoutAllSessions,
+  getMe,
+} from '../../api/iamClient';
+import { listAssistanceRequests } from '../../api/coreClient';
 import {
   getReceiverApps,
   getReceiverStats,
-  getInitials
+  getInitials,
 } from '../../utils/receiverHelpers';
+import { downloadJson, formatLastLogin } from '../../utils/receiverSettings';
 import {
-  INITIAL_RECEIVER_SETTINGS,
   RECEIVER_NOTIFICATION_TOGGLES,
   RECEIVER_PRIVACY_TOGGLES,
   RECEIVER_CONTACT_OPTIONS,
   RECEIVER_CATEGORY_OPTIONS,
   RECEIVER_LANGUAGE_OPTIONS,
   RECEIVER_TIMEZONE_OPTIONS,
-  RECEIVER_DATE_FORMAT_OPTIONS
+  RECEIVER_DATE_FORMAT_OPTIONS,
 } from '../../data/receiverSettingsData';
 
 function formatDate(value) {
@@ -30,9 +39,9 @@ function formatDate(value) {
   return d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 }
 
-function Toggle({ id, checked, onChange, title, description }) {
+function Toggle({ id, checked, onChange, title, description, disabled = false }) {
   return (
-    <div className="rs-toggle-row">
+    <div className={`rs-toggle-row${disabled ? ' is-disabled' : ''}`}>
       <div className="rs-toggle-row__text">
         <label htmlFor={id}>{title}</label>
         <p>{description}</p>
@@ -43,8 +52,9 @@ function Toggle({ id, checked, onChange, title, description }) {
         role="switch"
         aria-checked={checked}
         aria-label={title}
+        disabled={disabled}
         className={`rs-switch${checked ? ' is-on' : ''}`}
-        onClick={() => onChange(!checked)}
+        onClick={() => !disabled && onChange(!checked)}
       >
         <span className="rs-switch__thumb" />
       </button>
@@ -65,8 +75,51 @@ function SettingSelect({ id, label, value, onChange, options }) {
   );
 }
 
+function SettingsModal({ title, subtitle, onClose, children, footer }) {
+  return (
+    <div className="rs-modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="rs-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rs-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="rs-modal__head">
+          <div>
+            <h2 id="rs-modal-title">{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+          <button type="button" className="rs-modal__close" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </header>
+        <div className="rs-modal__body">{children}</div>
+        {footer && <footer className="rs-modal__foot">{footer}</footer>}
+      </div>
+    </div>
+  );
+}
+
+function PasswordField({ id, label, value, onChange, autoComplete }) {
+  return (
+    <label className="rs-field" htmlFor={id}>
+      <span>{label}</span>
+      <input
+        id={id}
+        type="password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+        placeholder="••••••••"
+      />
+    </label>
+  );
+}
+
 export default function ReceiverSettingsPage() {
-  const { currentUser, receiverApplications, dispatch } = useApp();
+  const navigate = useNavigate();
+  const { currentUser, receiverApplications, dispatch, logout } = useApp();
   const { showToast } = useToast();
 
   const apps = useMemo(
@@ -76,50 +129,185 @@ export default function ReceiverSettingsPage() {
   const stats = useMemo(() => getReceiverStats(apps), [apps]);
   const verified = isRoleVerified(currentUser);
 
-  const initial = useMemo(
-    () => ({
-      ...INITIAL_RECEIVER_SETTINGS,
-      ...(currentUser?.settings || {})
-    }),
-    [currentUser]
+  const {
+    settings,
+    security,
+    loading,
+    saving,
+    error,
+    dirty,
+    patch,
+    resetChanges,
+    saveSettings,
+    refreshSecurity,
+  } = useReceiverSettings({
+    userId: currentUser?.userId || currentUser?.id,
+    userSettings: currentUser?.settings,
+    onSaved: (merged) => {
+      dispatch({ type: 'UPDATE_USER', payload: { settings: merged } });
+      showToast('Settings saved successfully.', 'success');
+    },
+  });
+
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [deactivateModal, setDeactivateModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [deactivatePassword, setDeactivatePassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  const lastLoginLabel = useMemo(
+    () => formatLastLogin(security?.last_login_at, settings?.timezone),
+    [security, settings?.timezone]
   );
 
-  const [settings, setSettings] = useState(initial);
-  const [baseline, setBaseline] = useState(() => JSON.stringify(initial));
-  const dirty = JSON.stringify(settings) !== baseline;
+  const notifOn = settings
+    ? settings.emailNotifications || settings.smsNotifications || settings.assistanceUpdates
+    : false;
 
-  const patch = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
-
-  const resetChanges = () => {
-    setSettings(JSON.parse(baseline));
-    showToast('Changes discarded', 'success');
+  const handleSave = async () => {
+    try {
+      await saveSettings();
+    } catch {
+      showToast('Could not save settings. Please try again.', 'error');
+    }
   };
 
-  const saveSettings = () => {
-    if (!dirty) return;
-    dispatch({
-      type: 'UPDATE_USER',
-      payload: { settings: { ...settings } }
-    });
-    setBaseline(JSON.stringify(settings));
-    showToast('Settings saved.', 'success');
+  const handleReset = () => {
+    resetChanges();
+    showToast('Changes discarded.', 'success');
   };
 
-  const confirmDanger = (actionLabel) => {
-    const ok = window.confirm(
-      `${actionLabel}\n\nThis is a sensitive action. Are you sure you want to continue?`
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      showToast('New password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast('New passwords do not match.', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await changePassword({ current_password: currentPassword, new_password: newPassword });
+      setPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      showToast('Password updated successfully.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not change password.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeactivate = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await deactivateAccount(deactivatePassword);
+      setDeactivateModal(false);
+      showToast('Account deactivated. Signing you out…', 'success');
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      showToast(err.message || 'Could not deactivate account.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await deleteAccount({ password: deletePassword, confirmation: deleteConfirmation });
+      setDeleteModal(false);
+      showToast('Account deleted. Signing you out…', 'success');
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      showToast(err.message || 'Could not delete account.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    setActionLoading(true);
+    try {
+      await logoutAllSessions();
+      await refreshSecurity();
+      showToast('All other sessions have been signed out.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not sign out other sessions.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDownloadRequests = async () => {
+    setActionLoading(true);
+    try {
+      const rows = await listAssistanceRequests();
+      downloadJson('giveaway-assistance-requests.json', {
+        exported_at: new Date().toISOString(),
+        requests: rows,
+      });
+      showToast('Request history downloaded.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not download request history.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleExportAccount = async () => {
+    setActionLoading(true);
+    try {
+      const [profile, requests] = await Promise.all([
+        getMe(),
+        listAssistanceRequests().catch(() => []),
+      ]);
+      downloadJson('giveaway-receiver-account.json', {
+        exported_at: new Date().toISOString(),
+        profile,
+        settings,
+        assistance_requests: requests,
+      });
+      showToast('Account data exported.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not export account data.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading || !settings) {
+    return (
+      <div className="rs-page receiver-page receiver-module page-route">
+        <div className="rs-loading" role="status">
+          <Loader2 size={28} className="rs-spin" aria-hidden="true" />
+          <p>Loading your settings…</p>
+        </div>
+      </div>
     );
-    if (ok) showToast(`${actionLabel} request submitted for review`, 'success');
-  };
-
-  const notifOn =
-    settings.emailNotifications || settings.smsNotifications || settings.reminderNotifications;
+  }
 
   return (
     <div className="rs-page receiver-page receiver-module page-route">
       <header className="rs-hero">
+        <p className="rs-hero__eyebrow">Account</p>
         <h1>Settings</h1>
-        <p>Manage your account preferences, notifications, privacy, and request settings.</p>
+        <p>Manage notifications, request defaults, privacy, and account security.</p>
+        {error && <p className="rs-error-banner" role="alert">{error}</p>}
       </header>
 
       <section className="rs-overview" aria-label="Account overview">
@@ -130,7 +318,7 @@ export default function ReceiverSettingsPage() {
           <h2>{currentUser?.name || 'Receiver'}</h2>
           <div className="rs-overview__badges">
             <span className={`rs-pill ${verified ? 'rs-pill--success' : 'rs-pill--warning'}`}>
-              {verified ? 'Verified' : 'Registered'}
+              {verified ? 'Verified' : 'Verification pending'}
             </span>
             <span className="rs-overview__muted">
               Member since {formatDate(currentUser?.memberSince)}
@@ -140,15 +328,15 @@ export default function ReceiverSettingsPage() {
         <div className="rs-overview__stats">
           <div>
             <strong>{stats.underReview}</strong>
-            <span>Active Requests</span>
+            <span>Active</span>
           </div>
           <div>
             <strong>{stats.approved}</strong>
-            <span>Completed Requests</span>
+            <span>Completed</span>
           </div>
           <div>
             <strong>{notifOn ? 'On' : 'Off'}</strong>
-            <span>Notifications</span>
+            <span>Alerts</span>
           </div>
         </div>
       </section>
@@ -158,8 +346,8 @@ export default function ReceiverSettingsPage() {
           <header className="rs-card__head">
             <Bell size={18} aria-hidden="true" />
             <div>
-              <h2>Notification Preferences</h2>
-              <p>Choose how you want to hear about request updates and reminders.</p>
+              <h2>Notifications</h2>
+              <p>Choose how you receive assistance and account updates.</p>
             </div>
           </header>
           <div className="rs-list">
@@ -180,47 +368,31 @@ export default function ReceiverSettingsPage() {
           <header className="rs-card__head">
             <ClipboardList size={18} aria-hidden="true" />
             <div>
-              <h2>Request Preferences</h2>
-              <p>Defaults that help NGOs support your assistance needs.</p>
+              <h2>Request Defaults</h2>
+              <p>Preferences used when you submit financial assistance requests.</p>
             </div>
           </header>
-
           <div className="rs-grid">
             <SettingSelect
               id="rs-contact"
-              label="Preferred Contact Method"
+              label="Preferred contact method"
               value={settings.preferredContactMethod}
               onChange={(v) => patch('preferredContactMethod', v)}
               options={RECEIVER_CONTACT_OPTIONS}
             />
             <SettingSelect
               id="rs-category"
-              label="Default Request Category"
+              label="Default request category"
               value={settings.defaultRequestCategory}
               onChange={(v) => patch('defaultRequestCategory', v)}
               options={RECEIVER_CATEGORY_OPTIONS}
             />
           </div>
-
           <div className="rs-list">
             <Toggle
-              id="rs-alt"
-              title="Receive Alternative Item Suggestions"
-              description="Allow the platform to suggest similar available items for your requests."
-              checked={!!settings.alternativeSuggestions}
-              onChange={(v) => patch('alternativeSuggestions', v)}
-            />
-            <Toggle
-              id="rs-recommend"
-              title="Allow NGOs to Recommend Similar Items"
-              description="Let verified NGOs propose comparable support options."
-              checked={!!settings.allowNgoRecommendations}
-              onChange={(v) => patch('allowNgoRecommendations', v)}
-            />
-            <Toggle
               id="rs-draft"
-              title="Auto-save Draft Requests"
-              description="Automatically save unfinished request drafts as you type."
+              title="Auto-save draft requests"
+              description="Save unfinished assistance applications locally as you type."
               checked={!!settings.autoSaveDrafts}
               onChange={(v) => patch('autoSaveDrafts', v)}
             />
@@ -232,7 +404,7 @@ export default function ReceiverSettingsPage() {
             <Lock size={18} aria-hidden="true" />
             <div>
               <h2>Privacy</h2>
-              <p>Control what NGOs and the public can see about your account.</p>
+              <p>Control what reviewers can see about your profile.</p>
             </div>
           </header>
           <div className="rs-list">
@@ -253,28 +425,28 @@ export default function ReceiverSettingsPage() {
           <header className="rs-card__head">
             <SlidersHorizontal size={18} aria-hidden="true" />
             <div>
-              <h2>Account Preferences</h2>
-              <p>Language, regional formats, and appearance.</p>
+              <h2>Regional & Display</h2>
+              <p>Language, date format, and appearance.</p>
             </div>
           </header>
           <div className="rs-grid rs-grid--3">
             <SettingSelect
               id="rs-language"
-              label="Preferred Language"
+              label="Language"
               value={settings.language}
               onChange={(v) => patch('language', v)}
               options={RECEIVER_LANGUAGE_OPTIONS}
             />
             <SettingSelect
               id="rs-timezone"
-              label="Time Zone"
+              label="Time zone"
               value={settings.timezone}
               onChange={(v) => patch('timezone', v)}
               options={RECEIVER_TIMEZONE_OPTIONS}
             />
             <SettingSelect
               id="rs-date"
-              label="Date Format"
+              label="Date format"
               value={settings.dateFormat}
               onChange={(v) => patch('dateFormat', v)}
               options={RECEIVER_DATE_FORMAT_OPTIONS}
@@ -290,19 +462,17 @@ export default function ReceiverSettingsPage() {
                 className={`rs-theme-card${settings.theme === 'light' ? ' is-selected' : ''}`}
                 onClick={() => patch('theme', 'light')}
               >
-                Light Mode
+                Light mode
               </button>
               <button
                 type="button"
                 role="radio"
                 aria-checked={settings.theme === 'dark'}
-                className={`rs-theme-card${settings.theme === 'dark' ? ' is-selected' : ''}`}
-                onClick={() => {
-                  patch('theme', 'dark');
-                  showToast('Dark Mode coming soon', 'success');
-                }}
+                className="rs-theme-card is-disabled"
+                disabled
+                title="Coming soon"
               >
-                Dark Mode
+                Dark mode
                 <em>Coming soon</em>
               </button>
             </div>
@@ -314,62 +484,64 @@ export default function ReceiverSettingsPage() {
             <Shield size={18} aria-hidden="true" />
             <div>
               <h2>Security</h2>
-              <p>Protect your account and review recent access activity.</p>
+              <p>Protect your account and manage active sessions.</p>
             </div>
           </header>
           <div className="rs-security">
             <div className="rs-security__row">
               <div>
-                <strong>Change Password</strong>
+                <strong>Change password</strong>
                 <p>Update your password regularly for better security.</p>
               </div>
               <button
                 type="button"
                 className="rs-btn rs-btn--secondary"
-                onClick={() => showToast('Password change flow opened', 'success')}
+                onClick={() => setPasswordModal(true)}
               >
-                <KeyRound size={15} /> Change Password
+                <KeyRound size={15} /> Change
               </button>
             </div>
             <div className="rs-security__row">
               <div>
-                <strong>Last Login</strong>
-                <p>Most recent successful sign-in to this account.</p>
+                <strong>Last login</strong>
+                <p>Most recent successful sign-in.</p>
               </div>
-              <span className="rs-meta">Today · 11:05 AM IST</span>
+              <span className="rs-meta">{lastLoginLabel}</span>
             </div>
             <div className="rs-security__row">
               <div>
-                <strong>Active Sessions</strong>
-                <p>Devices currently signed in to your receiver account.</p>
+                <strong>Active sessions</strong>
+                <p>Sign out from other devices using your account.</p>
               </div>
               <div className="rs-security__actions">
-                <span className="rs-pill rs-pill--info">1 active</span>
+                <span className="rs-pill rs-pill--info">
+                  {security?.active_sessions ?? 1} active
+                </span>
                 <button
                   type="button"
                   className="rs-btn rs-btn--ghost"
-                  onClick={() => showToast('Active sessions reviewed', 'success')}
+                  onClick={handleLogoutAll}
+                  disabled={actionLoading}
                 >
-                  <MonitorSmartphone size={15} /> Manage
+                  <LogOut size={15} /> Sign out others
                 </button>
               </div>
             </div>
-            <div className="rs-security__row">
-              <div>
-                <strong>Two-Factor Authentication</strong>
-                <p>Future-ready extra protection for sensitive actions.</p>
-              </div>
-              <div className="rs-security__actions">
-                <span className="rs-pill rs-pill--warning">Not enabled</span>
+            {!verified && (
+              <div className="rs-security__row">
+                <div>
+                  <strong>Profile verification</strong>
+                  <p>Complete verification to submit financial assistance requests.</p>
+                </div>
                 <button
                   type="button"
                   className="rs-btn rs-btn--secondary"
-                  onClick={() => showToast('2FA setup coming soon', 'success')}
+                  onClick={() => navigate('/dashboard/receiver-profile')}
                 >
-                  <ShieldCheck size={15} /> Enable 2FA
+                  <ExternalLink size={15} /> Verify profile
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -377,31 +549,26 @@ export default function ReceiverSettingsPage() {
           <header className="rs-card__head">
             <Database size={18} aria-hidden="true" />
             <div>
-              <h2>Data & History</h2>
-              <p>Download your request history and account activity.</p>
+              <h2>Your Data</h2>
+              <p>Download your assistance request history and account data.</p>
             </div>
           </header>
           <div className="rs-data-actions">
             <button
               type="button"
               className="rs-btn rs-btn--secondary"
-              onClick={() => showToast('Downloading request history…', 'success')}
+              onClick={handleDownloadRequests}
+              disabled={actionLoading}
             >
-              <Download size={15} /> Download Request History
+              <Download size={15} /> Download requests
             </button>
             <button
               type="button"
               className="rs-btn rs-btn--secondary"
-              onClick={() => showToast('Exporting account data…', 'success')}
+              onClick={handleExportAccount}
+              disabled={actionLoading}
             >
-              <FileSpreadsheet size={15} /> Export Account Data
-            </button>
-            <button
-              type="button"
-              className="rs-btn rs-btn--secondary"
-              onClick={() => showToast('Opening activity log…', 'success')}
-            >
-              <History size={15} /> View Activity Log
+              <Download size={15} /> Export account data
             </button>
           </div>
         </section>
@@ -411,37 +578,30 @@ export default function ReceiverSettingsPage() {
             <HelpCircle size={18} aria-hidden="true" />
             <div>
               <h2>Help & Support</h2>
-              <p>Get help with requests, verification, and account issues.</p>
+              <p>Quick links for assistance and account help.</p>
             </div>
           </header>
           <div className="rs-data-actions">
             <button
               type="button"
               className="rs-btn rs-btn--secondary"
-              onClick={() => showToast('Opening support chat…', 'success')}
+              onClick={() => navigate('/dashboard/receiver-notifications')}
             >
-              <LifeBuoy size={15} /> Contact Support
+              <Bell size={15} /> View notifications
             </button>
             <button
               type="button"
               className="rs-btn rs-btn--secondary"
-              onClick={() => showToast('Issue report form opened', 'success')}
+              onClick={() => navigate('/dashboard/receiver-requests')}
             >
-              <Flag size={15} /> Report an Issue
+              <ClipboardList size={15} /> My requests
             </button>
             <button
               type="button"
               className="rs-btn rs-btn--ghost"
-              onClick={() => showToast('FAQs opened', 'success')}
+              onClick={() => navigate('/dashboard/receiver-profile')}
             >
-              <BookOpen size={15} /> FAQs
-            </button>
-            <button
-              type="button"
-              className="rs-btn rs-btn--ghost"
-              onClick={() => showToast('Community guidelines opened', 'success')}
-            >
-              <FileText size={15} /> Community Guidelines
+              <MonitorSmartphone size={15} /> Edit profile
             </button>
           </div>
         </section>
@@ -450,28 +610,28 @@ export default function ReceiverSettingsPage() {
           <header className="rs-card__head">
             <AlertTriangle size={18} aria-hidden="true" />
             <div>
-              <h2>Danger Zone</h2>
-              <p>These actions are irreversible and may pause assistance access.</p>
+              <h2>Danger zone</h2>
+              <p>These actions affect your access to assistance features.</p>
             </div>
           </header>
           <p className="rs-danger-note">
-            Deactivating or deleting your account will pause request matching and may remove access
-            to application history. Please confirm carefully before continuing.
+            Deactivating or deleting your account will pause request access and may remove
+            your application history. Please confirm carefully.
           </p>
           <div className="rs-danger-actions">
             <button
               type="button"
               className="rs-btn rs-btn--warning"
-              onClick={() => confirmDanger('Deactivate Account')}
+              onClick={() => setDeactivateModal(true)}
             >
-              Deactivate Account
+              Deactivate account
             </button>
             <button
               type="button"
               className="rs-btn rs-btn--danger"
-              onClick={() => confirmDanger('Delete Account')}
+              onClick={() => setDeleteModal(true)}
             >
-              Delete Account
+              Delete account
             </button>
           </div>
         </section>
@@ -479,29 +639,157 @@ export default function ReceiverSettingsPage() {
 
       <div className={`rs-actions${dirty ? ' is-dirty' : ''}`}>
         {dirty && (
-          <span className="rs-unsaved" role="status">
-            Unsaved Changes
-          </span>
+          <span className="rs-unsaved" role="status">Unsaved changes</span>
         )}
         <div className="rs-actions__btns">
           <button
             type="button"
             className="rs-btn rs-btn--secondary"
-            onClick={resetChanges}
-            disabled={!dirty}
+            onClick={handleReset}
+            disabled={!dirty || saving}
           >
-            <RotateCcw size={15} /> Reset Changes
+            <RotateCcw size={15} /> Discard
           </button>
           <button
             type="button"
             className="rs-btn rs-btn--primary"
-            onClick={saveSettings}
-            disabled={!dirty}
+            onClick={handleSave}
+            disabled={!dirty || saving}
           >
-            Save Settings
+            {saving ? (
+              <>
+                <Loader2 size={15} className="rs-spin" /> Saving…
+              </>
+            ) : (
+              'Save settings'
+            )}
           </button>
         </div>
       </div>
+
+      {passwordModal && (
+        <SettingsModal
+          title="Change password"
+          subtitle="Enter your current password and choose a new one."
+          onClose={() => setPasswordModal(false)}
+          footer={(
+            <>
+              <button type="button" className="rs-btn rs-btn--secondary" onClick={() => setPasswordModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="rs-password-form"
+                className="rs-btn rs-btn--primary"
+                disabled={actionLoading}
+              >
+                Update password
+              </button>
+            </>
+          )}
+        >
+          <form id="rs-password-form" className="rs-form" onSubmit={handleChangePassword}>
+            <PasswordField
+              id="rs-current-pw"
+              label="Current password"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              autoComplete="current-password"
+            />
+            <PasswordField
+              id="rs-new-pw"
+              label="New password"
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+            />
+            <PasswordField
+              id="rs-confirm-pw"
+              label="Confirm new password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+            />
+          </form>
+        </SettingsModal>
+      )}
+
+      {deactivateModal && (
+        <SettingsModal
+          title="Deactivate account"
+          subtitle="Your account will be paused. You can contact support to reactivate."
+          onClose={() => setDeactivateModal(false)}
+          footer={(
+            <>
+              <button type="button" className="rs-btn rs-btn--secondary" onClick={() => setDeactivateModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="rs-deactivate-form"
+                className="rs-btn rs-btn--warning"
+                disabled={actionLoading}
+              >
+                Deactivate
+              </button>
+            </>
+          )}
+        >
+          <form id="rs-deactivate-form" className="rs-form" onSubmit={handleDeactivate}>
+            <PasswordField
+              id="rs-deactivate-pw"
+              label="Confirm your password"
+              value={deactivatePassword}
+              onChange={setDeactivatePassword}
+              autoComplete="current-password"
+            />
+          </form>
+        </SettingsModal>
+      )}
+
+      {deleteModal && (
+        <SettingsModal
+          title="Delete account"
+          subtitle="This permanently removes your account. Type DELETE to confirm."
+          onClose={() => setDeleteModal(false)}
+          footer={(
+            <>
+              <button type="button" className="rs-btn rs-btn--secondary" onClick={() => setDeleteModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="rs-delete-form"
+                className="rs-btn rs-btn--danger"
+                disabled={actionLoading}
+              >
+                Delete permanently
+              </button>
+            </>
+          )}
+        >
+          <form id="rs-delete-form" className="rs-form" onSubmit={handleDelete}>
+            <PasswordField
+              id="rs-delete-pw"
+              label="Password"
+              value={deletePassword}
+              onChange={setDeletePassword}
+              autoComplete="current-password"
+            />
+            <label className="rs-field" htmlFor="rs-delete-confirm">
+              <span>Type DELETE to confirm</span>
+              <input
+                id="rs-delete-confirm"
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </label>
+          </form>
+        </SettingsModal>
+      )}
     </div>
   );
 }

@@ -1075,6 +1075,19 @@ button.rd-cat-card.is-selected .rd-cat-card__icon {
   border-top: 1px solid #F1F5F9;
 }
 
+.rd-review-actions--split {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rd-review-actions__primary {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
 /* ========== Success ========== */
 .rd-success {
   text-align: center;

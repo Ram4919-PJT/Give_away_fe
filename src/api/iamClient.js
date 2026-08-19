@@ -60,7 +60,10 @@ export async function logout(refreshToken) {
 
 export async function getMe(accessToken) {
   const token = accessToken || getStoredAccessToken();
-  return apiRequest('/auth/me', { auth: !!token });
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+  return apiRequest('/auth/me', { auth: true, accessToken: token, retry: true });
 }
 
 export async function sendOtp(mobile, purpose = 'DONATION_LOGIN') {
@@ -108,5 +111,34 @@ export async function resetPassword({ email, otp_code, new_password }) {
       new_password,
     },
     auth: false,
+  });
+}
+
+export async function changePassword({ current_password, new_password }) {
+  return apiRequest('/auth/password/change', {
+    method: 'POST',
+    body: { current_password, new_password },
+  });
+}
+
+export async function getSecurityInfo() {
+  return apiRequest('/auth/me/security');
+}
+
+export async function logoutAllSessions() {
+  return apiRequest('/auth/logout-all', { method: 'POST' });
+}
+
+export async function deactivateAccount(password) {
+  return apiRequest('/auth/account/deactivate', {
+    method: 'POST',
+    body: { password },
+  });
+}
+
+export async function deleteAccount({ password, confirmation }) {
+  return apiRequest('/auth/account/delete', {
+    method: 'POST',
+    body: { password, confirmation },
   });
 }

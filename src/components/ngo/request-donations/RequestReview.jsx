@@ -1,4 +1,4 @@
-import { Send, Pencil } from 'lucide-react';
+import { Send, Pencil, ArrowLeft } from 'lucide-react';
 import {
   getCategoryById,
   getPriorityStyle,
@@ -15,7 +15,7 @@ function ReviewCard({ label, value, wide = false, children }) {
   );
 }
 
-export default function RequestReview({ form, onEdit, onSubmit }) {
+export default function RequestReview({ form, onEdit, onBack, onSubmit, submitting = false }) {
   const category = getCategoryById(form.category);
   const pri = getPriorityStyle(form.priority);
   const conditionLabel = CONDITION_OPTIONS.find((c) => c.id === form.condition)?.label;
@@ -74,15 +74,26 @@ export default function RequestReview({ form, onEdit, onSubmit }) {
         <ReviewCard label="Special Instructions" wide value={form.specialInstructions || '—'} />
       </div>
 
-      <div className="rd-review-actions">
-        <button type="button" className="rd-btn rd-btn--ghost" onClick={onEdit}>
-          <Pencil size={16} />
-          Edit
+      <div className="rd-review-actions rd-review-actions--split">
+        <button type="button" className="rd-btn rd-btn--ghost" onClick={onBack}>
+          <ArrowLeft size={16} />
+          Previous
         </button>
-        <button type="button" className="rd-btn rd-btn--primary" onClick={onSubmit}>
-          <Send size={16} />
-          Submit Request
-        </button>
+        <div className="rd-review-actions__primary">
+          <button type="button" className="rd-btn rd-btn--ghost" onClick={onEdit}>
+            <Pencil size={16} />
+            Edit
+          </button>
+          <button
+            type="button"
+            className="rd-btn rd-btn--primary"
+            onClick={onSubmit}
+            disabled={submitting}
+          >
+            <Send size={16} />
+            {submitting ? 'Submitting…' : 'Submit Request'}
+          </button>
+        </div>
       </div>
     </div>
   );

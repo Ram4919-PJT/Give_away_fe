@@ -145,8 +145,18 @@ export async function createDonorProfile(payload = {}) {
   }));
 }
 
-export async function createReceiverProfile(payload) {
-  return apiRequest('/core/profiles/receivers', { method: 'POST', body: payload });
+export async function createReceiverProfile(payload = {}) {
+  const me = await getMe();
+  return apiRequest('/core/profiles/receivers', {
+    method: 'POST',
+    body: {
+      user_id: me.user_id,
+      full_name: payload.full_name || me.full_name,
+      mobile: payload.mobile || me.mobile,
+      email: payload.email || me.email,
+      address_id: payload.address_id ?? null,
+    },
+  });
 }
 
 export async function createNgoProfile(payload) {
@@ -404,52 +414,152 @@ export async function getAssistanceRequest(requestId) {
 }
 
 export async function createAssistanceRequest(payload) {
-  const me = await getMe();
-  const receivers = await apiRequest('/core/profiles/receivers');
-  const receiver =
-    (Array.isArray(receivers) && receivers.find((r) => r.user_id === me.user_id)) ||
-    (Array.isArray(receivers) && receivers[0]);
-  if (!receiver) {
-    throw new Error('Receiver profile not found.');
+  const amount = Number(payload.amount_requested ?? 0);
+  if (!amount || amount <= 0) {
+    throw new Error('Enter a valid amount greater than ₹0.');
   }
-
-  const amountMatch = String(payload.description || '').match(/Amount:\s*([0-9.]+)/i);
-  const purpose =
-    payload.purpose ||
-    payload.title ||
-    String(payload.description || '').match(/Purpose:\s*([^|]+)/i)?.[1]?.trim() ||
-    'Assistance request';
-
+  if (!payload.purpose?.trim()) {
+    throw new Error('Please describe the purpose of your request.');
+  }
   return apiRequest('/core/applications', {
     method: 'POST',
     body: {
-      receiver_id: receiver.receiver_id,
-      purpose,
-      amount_requested: Number(payload.amount_requested ?? amountMatch?.[1] ?? 0),
+      purpose: payload.purpose.trim(),
+      amount_requested: amount,
+      category: payload.category || null,
+      expense_breakdown: payload.expense_breakdown || null,
+      notes: payload.notes || null,
     },
   });
 }
 
-export async function createDonationOrder({ amount, currency = 'INR', causeId, mobile }) {
-  return apiRequest('/donations/create-order', {
+export async function submitAssistanceBankDetails(applicationId, payload) {
+  return apiRequest(`/core/applications/${applicationId}/bank-details`, {
     method: 'POST',
-    body: { amount, currency, causeId, mobile },
-  }).catch(async () => {
-    return apiRequest('/core/donations/create-order', {
-      method: 'POST',
-      body: { amount, currency, causeId, mobile },
-    });
+    body: payload,
+  });
+}
+
+export async function getMyNgoProfile() {
+  try {
+    return await apiRequest('/core/ngos/me/profile');
+  } catch {
+    const [ngos, userId] = await Promise.all([
+      apiRequest('/core/profiles/ngos'),
+      currentUserId(),
+    ]);
+    return Array.isArray(ngos) ? ngos.find((n) => n.user_id === userId) : null;
+  }
+}
+
+export async function getNgoDashboard(period = 'month') {
+  const q = period ? `?period=${encodeURIComponent(period)}` : '';
+  return apiRequest(`/core/ngos/me/dashboard${q}`);
+}
+
+export async function getProgram(programId) {
+  return apiRequest(`/core/programs/${programId}`);
+}
+
+export async function createProgram(payload) {
+  return apiRequest('/core/programs', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export async function updateProgram(programId, payload) {
+  return apiRequest(`/core/programs/${programId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+export async function updateProgramStatus(programId, payload) {
+  return apiRequest(`/core/programs/${programId}/status`, {
+    method: 'PATCH',
+    body: payload,
+  });
+}
+
+export async function createNgoBeneficiary(payload) {
+  return apiRequest('/core/ngos/me/beneficiaries', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export async function getMyReceiverProfile() {
+  const [receivers, userId] = await Promise.all([
+    apiRequest('/core/profiles/receivers'),
+    currentUserId(),
+  ]);
+  return Array.isArray(receivers) ? receivers.find((r) => r.user_id === userId) : null;
+}
+
+export async function listInventory() {
+  return apiRequest('/core/inventory');
+}
+
+export async function listBeneficiaries(ngoId) {
+  const q = ngoId != null ? `?ngo_id=${encodeURIComponent(ngoId)}` : '';
+  return apiRequest(`/core/beneficiaries${q}`);
+}
+
+export async function listNgoItemRequests(ngoId) {
+  const q = ngoId != null ? `?ngo_id=${encodeURIComponent(ngoId)}` : '';
+  return apiRequest(`/core/applications/ngo-item-requests${q}`);
+}
+
+export async function createNgoItemRequest({ ngo_id, item_category, quantity_requested }) {
+  return apiRequest('/core/applications/ngo-item-requests', {
+    method: 'POST',
+    body: { ngo_id, item_category, quantity_requested },
+  });
+}
+
+export async function listNgoFundRequests(ngoId) {
+  const q = ngoId != null ? `?ngo_id=${encodeURIComponent(ngoId)}` : '';
+  return apiRequest(`/core/applications/ngo-fund-requests${q}`);
+}
+
+export async function createNgoFundRequest({ ngo_id, amount_requested, purpose }) {
+  return apiRequest('/core/applications/ngo-fund-requests', {
+    method: 'POST',
+    body: { ngo_id, amount_requested, purpose },
+  });
+}
+
+export async function getPublicPrograms() {
+  return apiRequest('/core/public/programs', { auth: false });
+}
+
+export async function getPublicStats() {
+  return apiRequest('/core/public/stats', { auth: false });
+}
+
+export async function submitNgoVerificationRequest(notes) {
+  const me = await getMe();
+  return createVerificationRequest({
+    entity_type: 'NGO',
+    request_type: 'NGO',
+    notes: notes || 'NGO verification request',
+    user_id: me.user_id,
+  });
+}
+
+export async function createDonationOrder(payload) {
+  const { createPaymentOrder } = await import('./paymentClient');
+  return createPaymentOrder({
+    amount: payload.amount,
+    programId: payload.program_id || payload.causeId || payload.programId || 1,
+    mobile: payload.mobile,
+    donorName: payload.donor_name || payload.donorName,
+    authenticated: payload.authenticated,
   });
 }
 
 export async function verifyDonationPayment({ orderId, paymentId, signature }) {
-  return apiRequest('/donations/verify-payment', {
-    method: 'POST',
-    body: { orderId, paymentId, signature },
-  }).catch(async () => {
-    return apiRequest('/core/donations/verify-payment', {
-      method: 'POST',
-      body: { orderId, paymentId, signature },
-    });
-  });
+  const { verifyPayment } = await import('./paymentClient');
+  return verifyPayment({ orderId, paymentId, signature });
 }

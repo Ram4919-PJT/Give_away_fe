@@ -17,6 +17,7 @@ import {
   computeProfileCompletion,
   getVerificationDocs
 } from '../../../data/ngoProfileData';
+import NgoLocationPicker from '../../location/NgoLocationPicker';
 
 function getInitials(name = '') {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -82,7 +83,7 @@ export default function OrganizationProfilePage() {
       completion,
       donationsReceived: Math.max(approved * 12, reqs.length ? 24 : 0),
       beneficiaries: ngoBeneficiaries?.length || 0,
-      activeCampaigns: reqs.filter((r) => ['Submitted', 'Under Review', 'Approved'].includes(r.status)).length,
+      activeRequests: reqs.filter((r) => ['Submitted', 'Under Review', 'Approved'].includes(r.status)).length,
       partnerDonors: verified ? 18 : 3
     };
   }, [reqs, ngoBeneficiaries, verified, verifyStatus, completion, currentUser?.memberSince]);
@@ -337,6 +338,8 @@ export default function OrganizationProfilePage() {
                   </Field>
                 </div>
               </div>
+
+              <NgoLocationPicker form={form} onPatch={patch} />
             </section>
 
             <section className="op-card">
@@ -479,8 +482,8 @@ export default function OrganizationProfilePage() {
                 <dd>{summary.beneficiaries}</dd>
               </div>
               <div>
-                <dt>Active Campaigns</dt>
-                <dd>{summary.activeCampaigns}</dd>
+                <dt>Active Requests</dt>
+                <dd>{summary.activeRequests}</dd>
               </div>
               <div>
                 <dt>Partner Donors</dt>

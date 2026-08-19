@@ -4,6 +4,7 @@ import { Building2, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Shiel
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
 import { persistNgoProfile } from '../../utils/ngoVerificationStore';
+import { getDashboardPathForRole } from '../../utils/roleMap';
 
 // ==========================================
 // 1. BACKGROUND DECORATIONS COMPONENT (CLEAN BACKGROUND)
@@ -99,8 +100,8 @@ function NgoRegistrationCard({ onNavigate }) {
         name: orgName.trim()
       });
 
-      showToast('NGO account created. Please wait for admin approval before signing in.', 'success');
-      onNavigate('/login');
+      showToast('NGO account created. Complete partner verification to unlock programs.', 'success');
+      onNavigate('/dashboard/ngo-verify');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {

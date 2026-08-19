@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../components/ui/Toast';
+import { getDashboardPathForRole } from '../../utils/roleMap';
 
 // ==========================================
 // 1. BACKGROUND DECORATIONS COMPONENT
@@ -125,10 +126,10 @@ function RegistrationCard({ onNavigate }) {
         full_name: fullName.trim(),
         email: email.trim(),
         mobile: mobile.trim(),
-        password
+        password,
       });
-      showToast('Account created. Please wait for admin approval before signing in.', 'success');
-      onNavigate('/login');
+      showToast('Account created. Welcome to Aja Abayahastham!', 'success');
+      onNavigate(getDashboardPathForRole('donor'));
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {

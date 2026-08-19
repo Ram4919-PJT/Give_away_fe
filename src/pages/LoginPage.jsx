@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, ArrowLeft, ShieldCheck, UserCheck, Quote } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../components/ui/Toast';
 import { useLogoutAction } from '../hooks/useLogoutAction';
 import { getDashboardPathForRole } from '../utils/roleMap';
+import { getAdminPortalUrl } from '../utils/adminPortal';
+
+const LOGIN_HINTS = {
+  receiver: 'Sign in with your registered email and password. Complete KYC verification before requesting financial assistance.',
+  donor: 'Sign in with your registered email and password to donate and track your impact.',
+  ngo: 'Sign in with your NGO partner credentials. Complete verification to unlock programs and requests.',
+};
 
 function BackgroundDecorations() {
   return (
@@ -48,6 +55,12 @@ function BackgroundDecorations() {
 
 export default function LoginPage() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const loginRole = searchParams.get('role');
+  const loginHint = useMemo(
+    () => LOGIN_HINTS[loginRole] || 'Sign in with the email and password you used when creating your account.',
+    [loginRole],
+  );
   const [email, setEmail] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -188,7 +201,7 @@ export default function LoginPage() {
               Sign in to your account
             </h2>
             <p className="text-[#475569] text-xs sm:text-sm font-medium text-center leading-relaxed max-w-sm mx-auto mb-6 sm:mb-8">
-              Use the email and password registered with the platform. New accounts can sign in only after admin approval.
+              {loginHint}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -314,6 +327,10 @@ export default function LoginPage() {
           <span>|</span>
           <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#0B57D0] transition">
             Terms &amp; Conditions
+          </a>
+          <span>|</span>
+          <a href={getAdminPortalUrl('/')} className="hover:text-[#0B57D0] transition">
+            Admin Portal
           </a>
         </div>
       </footer>

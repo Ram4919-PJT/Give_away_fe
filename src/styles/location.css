@@ -1,0 +1,612 @@
+.loc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(11, 36, 91, 0.42);
+}
+
+.loc-modal {
+  width: min(520px, 100%);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(11, 36, 91, 0.18);
+  border: 1px solid #e8f0fc;
+}
+
+.loc-modal__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 0.5rem;
+}
+
+.loc-modal__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1268e8;
+}
+
+.loc-modal__head h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+  color: #0b245b;
+}
+
+.loc-modal__sub {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  color: #49638f;
+  line-height: 1.5;
+}
+
+.loc-modal__close {
+  border: none;
+  background: #f4f7fc;
+  color: #49638f;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.loc-modal__body {
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+.loc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.loc-btn--primary {
+  background: #1268e8;
+  color: #fff;
+}
+
+.loc-btn--primary:hover:not(:disabled) {
+  background: #0f54be;
+}
+
+.loc-btn--ghost {
+  background: #fff;
+  color: #1268e8;
+  border: 1.5px solid #dce8fa;
+}
+
+.loc-btn--block {
+  width: 100%;
+}
+
+.loc-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.loc-divider {
+  display: grid;
+  place-items: center;
+  margin: 1rem 0;
+  color: #8aa0c5;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.loc-divider::before,
+.loc-divider::after {
+  content: '';
+  height: 1px;
+  width: 100%;
+  background: #e8f0fc;
+}
+
+.loc-divider span {
+  padding: 0 0.75rem;
+}
+
+.loc-search-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0b245b;
+}
+
+.loc-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1.5px solid #dce8fa;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  background: #f7faff;
+  color: #49638f;
+}
+
+.loc-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.92rem;
+  color: #0b245b;
+}
+
+.loc-search-results {
+  margin-top: 0.65rem;
+  border: 1px solid #e8f0fc;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loc-search-result {
+  width: 100%;
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0.75rem 0.85rem;
+  border: none;
+  background: #fff;
+  border-bottom: 1px solid #eef3fb;
+  cursor: pointer;
+  color: #0b245b;
+}
+
+.loc-search-result:last-child {
+  border-bottom: none;
+}
+
+.loc-search-result:hover {
+  background: #f4f8ff;
+}
+
+.loc-search-result strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.loc-search-result small {
+  display: block;
+  margin-top: 0.15rem;
+  color: #6b7f9f;
+  font-size: 0.78rem;
+}
+
+.loc-recent {
+  margin-top: 1rem;
+}
+
+.loc-recent__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #49638f;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.loc-recent ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.loc-recent button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0;
+  color: #1268e8;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.loc-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  color: #6b7f9f;
+}
+
+.loc-alert {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: #fff8eb;
+  border: 1px solid #fde6b0;
+  color: #7a5b12;
+}
+
+.loc-alert p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.loc-alert__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.loc-spin {
+  animation: loc-spin 0.9s linear infinite;
+}
+
+@keyframes loc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.loc-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  background: #eef5ff;
+  border: 1px solid #dce8fa;
+  color: #0b245b;
+  font-size: 0.88rem;
+}
+
+.loc-banner--compact {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.loc-banner--loading {
+  color: #49638f;
+}
+
+.loc-banner__icon {
+  color: #1268e8;
+  flex-shrink: 0;
+}
+
+.loc-banner__text strong {
+  color: #0b245b;
+}
+
+.loc-banner__change {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #1268e8;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+}
+
+.loc-banner__change--primary {
+  background: #1268e8;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+}
+
+.loc-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loc-page__hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.loc-page__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1268e8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.loc-page__hero h1 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: #0b245b;
+}
+
+.loc-page__hero p {
+  margin: 0.35rem 0 0;
+  color: #49638f;
+}
+
+.loc-card {
+  background: #fff;
+  border: 1px solid #e8f0fc;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(11, 36, 91, 0.06);
+}
+
+.loc-card--center {
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.loc-card--center h2 {
+  margin: 0.75rem 0 0;
+  color: #0b245b;
+}
+
+.loc-card--center p {
+  margin: 0.5rem 0 0;
+  color: #49638f;
+}
+
+.loc-page__icon {
+  color: #1268e8;
+}
+
+.loc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.loc-radius {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.loc-radius__chip {
+  border: 1.5px solid #dce8fa;
+  background: #fff;
+  color: #49638f;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.loc-radius__chip.is-active {
+  background: #1268e8;
+  border-color: #1268e8;
+  color: #fff;
+}
+
+.loc-view-toggle {
+  display: inline-flex;
+  border: 1.5px solid #dce8fa;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.loc-view-toggle button {
+  border: none;
+  background: #fff;
+  color: #49638f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.loc-view-toggle button.is-active {
+  background: #eef5ff;
+  color: #1268e8;
+}
+
+.loc-toolbar__refresh {
+  padding: 0.45rem;
+}
+
+.loc-results {
+  display: grid;
+  gap: 1rem;
+}
+
+.loc-results--map {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 960px) {
+  .loc-results--map {
+    grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.1fr);
+    align-items: start;
+  }
+}
+
+.loc-map-wrap {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e8f0fc;
+  min-height: 280px;
+  background: #f4f7fc;
+}
+
+.loc-map {
+  width: 100%;
+  height: min(52vh, 420px);
+  min-height: 280px;
+}
+
+.loc-ngo-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .loc-ngo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.loc-ngo-card {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e8f0fc;
+  box-shadow: 0 6px 18px rgba(11, 36, 91, 0.05);
+}
+
+.loc-ngo-card__icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  background: #eef5ff;
+  color: #1268e8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.loc-ngo-card__body h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0b245b;
+}
+
+.loc-ngo-card__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: #6b7f9f;
+}
+
+.loc-ngo-card__distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1268e8;
+}
+
+.loc-ngo-card__actions {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.loc-ngo-card__btns {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.loc-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #f4f7fc;
+  color: #49638f;
+}
+
+.loc-badge--verified {
+  background: #e8f8ef;
+  color: #0f7a45;
+}
+
+.loc-skel {
+  background: linear-gradient(90deg, #eef3fb 25%, #f8fbff 50%, #eef3fb 75%);
+  background-size: 200% 100%;
+  animation: loc-shimmer 1.2s infinite;
+  border-radius: 8px;
+}
+
+.loc-skel--logo {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.loc-skel--line {
+  height: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.loc-skel--line.short {
+  width: 60%;
+}
+
+@keyframes loc-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.loc-ngo-card--skeleton {
+  min-height: 120px;
+}
+
+.loc-map-pin {
+  background: transparent;
+  border: none;
+}
+
+.loc-map-pin--user span {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.loc-banner--dashboard {
+  margin: 0 0 0.75rem;
+}
+
+.loc-ngo-picker {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8f0fc;
+}
+
+.loc-ngo-picker__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.84rem;
+  color: #49638f;
+  line-height: 1.5;
+}
+
+.loc-ngo-picker__actions {
+  margin-bottom: 0.75rem;
+}
+
+.landing-page .loc-banner {
+  margin-top: 0.5rem;
+  max-width: 32rem;
+}

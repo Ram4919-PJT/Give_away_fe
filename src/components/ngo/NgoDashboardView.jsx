@@ -1,456 +1,362 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as LucideIcons from 'lucide-react';
 import {
-  Shield, ShieldCheck, Package, Users, BarChart3, Layers, Clock,
-  CheckCircle, Send, Bell, ArrowRight, Building2, FileText, TrendingUp
+  Plus, ShieldCheck, Shield, ArrowRight, Loader2, AlertCircle,
+  Users, Package, Banknote, Layers, TrendingUp, Clock, Lock,
 } from 'lucide-react';
-import { useApp, isNgoVerified, getNgoVerificationStatus, isNgoVerificationSubmitted } from '../../context/AppContext';
-import {
-  getNgoRequests, getNgoStats, requestStatusClass, notificationStatusClass,
-  formatRequestAmount, getBeneficiaryCategoryStats, buildActivityTimeline
-} from '../../utils/ngoHelpers';
+import { useApp, isNgoVerified, isNgoVerificationSubmitted, isNgoSuspended, getNgoVerificationStatus } from '../../context/AppContext';
+import { useNgoDashboard } from '../../hooks/useNgoDashboard';
+import { DonationTrendChart, DonationDistributionChart } from '../ngo/reports/ReportCharts';
+import AjaBrandMark from '../branding/AjaBrandMark';
 
-function StatusBadge({ user }) {
-  const status = getNgoVerificationStatus(user);
-  const labels = {
-    registered: 'Registered NGO',
-    pending: 'Pending Verification',
-    verified: 'Verified NGO',
-    rejected: 'Rejected',
-    suspended: 'Suspended'
-  };
+const PERIOD_OPTIONS = [
+  { id: 'week', label: 'This Week' },
+  { id: 'month', label: 'This Month' },
+  { id: 'last_3_months', label: 'Last 3 Months' },
+  { id: 'year', label: 'This Year' },
+];
+
+function KpiCard({ kpi }) {
   return (
-    <span className={`ngo-status-badge ngo-dash-status-badge ngo-status-badge--${status}`}>
-      {status === 'verified' && <ShieldCheck size={12} aria-hidden="true" />}
-      {status === 'pending' && <Clock size={12} aria-hidden="true" />}
-      {labels[status] || labels.registered}
-    </span>
+    <article className={`ngo-kpi ngo-kpi--${kpi.accent}`}>
+      <p className="ngo-kpi__label">{kpi.label}</p>
+      <p className="ngo-kpi__value">{kpi.display}</p>
+      <p className="ngo-kpi__hint">{kpi.hint}</p>
+    </article>
   );
 }
 
-function NotifIcon({ name, size = 18 }) {
-  const key = (name || 'bell').split('-').map((p, i) =>
-    i === 0 ? p.charAt(0).toUpperCase() + p.slice(1) : p.charAt(0).toUpperCase() + p.slice(1)
-  ).join('');
-  const Cmp = LucideIcons[key] || Bell;
-  return <Cmp size={size} />;
-}
-
-function CircularProgress({ pct, color, label, count }) {
-  const deg = Math.min(100, Math.max(0, pct)) * 3.6;
-  return (
-    <div className="ngo-dash-ring" title={`${label}: ${count}`}>
-      <div
-        className="ngo-dash-ring__chart"
-        style={{ background: `conic-gradient(${color} ${deg}deg, #E5E7EB ${deg}deg)` }}
-        aria-hidden="true"
-      >
-        <span className="ngo-dash-ring__value">{count}</span>
-      </div>
-      <span className="ngo-dash-ring__label">{label}</span>
-    </div>
-  );
+function StatusBadge({ status }) {
+  const key = (status || '').toLowerCase();
+  let cls = 'ngo-status-pill';
+  if (key.includes('approv') || key.includes('fulfil') || key.includes('complete')) cls += ' ngo-status-pill--success';
+  else if (key.includes('reject') || key.includes('cancel')) cls += ' ngo-status-pill--danger';
+  else if (key.includes('review') || key.includes('pending') || key.includes('submit')) cls += ' ngo-status-pill--warning';
+  return <span className={cls}>{status}</span>;
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="ngo-dash-skeleton" aria-hidden="true">
-      <div className="ngo-dash-skeleton__hero" />
-      <div className="ngo-dash-skeleton__stats">
-        {[1, 2, 3, 4].map((i) => <div key={i} className="ngo-dash-skeleton__stat" />)}
+    <div className="ngo-dash-v2-skeleton" aria-hidden="true">
+      <div className="ngo-dash-v2-skeleton__hero" />
+      <div className="ngo-dash-v2-skeleton__kpis">
+        {[1, 2, 3, 4].map((i) => <div key={i} />)}
       </div>
-      <div className="ngo-dash-skeleton__grid">
-        <div className="ngo-dash-skeleton__panel" />
-        <div className="ngo-dash-skeleton__panel ngo-dash-skeleton__panel--sm" />
+      <div className="ngo-dash-v2-skeleton__grid">
+        <div />
+        <div />
       </div>
+    </div>
+  );
+}
+
+function EmptyPanel({ title, description, actionLabel, onAction, disabled }) {
+  return (
+    <div className="ngo-dash-empty-v2">
+      <h3>{title}</h3>
+      <p>{description}</p>
+      {actionLabel && (
+        <button type="button" className="ngo-btn ngo-btn--primary" onClick={onAction} disabled={disabled}>
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function NgoDashboardView() {
-  const { currentUser, ngoRequests, ngoNotifications, ngoBeneficiaries } = useApp();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { currentUser } = useApp();
+  const { data, loading, error, period, changePeriod, reload } = useNgoDashboard('month');
 
   const verified = isNgoVerified(currentUser);
   const submitted = isNgoVerificationSubmitted(currentUser);
-  const reqs = getNgoRequests(ngoRequests, currentUser);
-  const stats = getNgoStats(reqs, ngoBeneficiaries, verified, submitted);
-  const recentReqs = reqs.slice(0, 3);
-  const notifs = (ngoNotifications || []).slice(0, 4);
-  const beneficiaryCats = getBeneficiaryCategoryStats(ngoBeneficiaries);
-  const timeline = buildActivityTimeline(reqs, ngoNotifications);
+  const suspended = isNgoSuspended(currentUser);
+  const verificationStatus = getNgoVerificationStatus(currentUser);
+  const ngoName = data?.profile?.ngo_name || currentUser?.name || 'NGO Partner';
+  const verificationMessage = data?.verification_message
+    || (suspended
+      ? 'Your NGO account is suspended. Contact platform support for assistance.'
+      : 'Complete NGO verification to access donations, funds, inventory, beneficiaries, and reports.');
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 480);
-    return () => clearTimeout(t);
-  }, []);
+  const trendData = useMemo(
+    () => (data?.donation_trend || []).map((row) => ({ label: row.label, value: row.value })),
+    [data]
+  );
+  const typeData = useMemo(() => data?.donations_by_type || [], [data]);
 
-  const quickActions = [
-    {
-      icon: Layers,
-      emoji: '📚',
-      title: 'Browse Programs',
-      desc: 'Explore AJA assistance programs',
-      arrow: 'Browse',
-      path: '/dashboard/ngo-programs',
-      disabled: false
-    },
-    {
-      icon: Package,
-      emoji: '📄',
-      title: 'Request Donation',
-      desc: 'Submit item or financial requests',
-      arrow: 'Apply',
-      path: '/dashboard/ngo-request-donations',
-      disabled: !verified
-    },
-    {
-      icon: Users,
-      emoji: '👥',
-      title: 'Manage Beneficiaries',
-      desc: 'Track people you support',
-      arrow: 'View',
-      path: '/dashboard/ngo-beneficiaries',
-      disabled: !verified
-    },
-    {
-      icon: ShieldCheck,
-      emoji: '🛡',
-      title: 'Verification',
-      desc: 'Complete NGO documentation',
-      arrow: 'Complete',
-      path: '/dashboard/ngo-verify',
-      disabled: verified
-    },
-    {
-      icon: BarChart3,
-      emoji: '📊',
-      title: 'Reports',
-      desc: 'Donation and impact analytics',
-      arrow: 'Open',
-      path: '/dashboard/ngo-reports',
-      disabled: !verified
-    }
-  ];
-
-  const statCards = [
-    {
-      icon: Package,
-      emoji: '📦',
-      value: stats.donationRequests,
-      label: 'Donation Requests',
-      trend: `+${Math.max(stats.donationRequests, 1)} this month`,
-      accent: 'blue'
-    },
-    {
-      icon: CheckCircle,
-      emoji: '✅',
-      value: stats.approved,
-      label: 'Approved',
-      trend: stats.approved ? `${stats.approved} active` : 'Awaiting approvals',
-      accent: 'green'
-    },
-    {
-      icon: Users,
-      emoji: '👥',
-      value: verified ? stats.beneficiaries : '—',
-      label: 'Beneficiaries',
-      trend: verified ? 'People supported' : 'Unlock after verification',
-      accent: 'purple'
-    },
-    {
-      icon: Shield,
-      emoji: '🛡',
-      value: submitted ? null : verified ? null : 1,
-      label: submitted ? 'Review Status' : verified ? 'Verification' : 'Pending Verification',
-      trend: submitted ? 'Documents under review' : verified ? 'Fully verified' : 'Action required',
-      accent: 'orange',
-      badge: submitted ? 'Under Review' : verified ? 'Verified' : null
-    }
-  ];
-
-  if (loading) {
+  if (loading && !data) {
     return (
-      <div className="ngo-page ngo-module page-route ngo-dashboard">
+      <div className="ngo-page ngo-module page-route ngo-dashboard-v2">
         <DashboardSkeleton />
       </div>
     );
   }
 
-  return (
-    <div className="ngo-page ngo-module page-route ngo-dashboard ngo-dashboard--premium">
-      {/* Hero */}
-      <section className="ngo-dash-hero ngo-dash-animate">
-        <div className="ngo-dash-hero__content">
-          <StatusBadge user={currentUser} />
-          <h1>Together We Build Stronger Communities</h1>
-          <p className="ngo-dash-hero__subtitle">
-            Welcome back, <strong>{currentUser.name}</strong>.
-          </p>
-          <p className="ngo-dash-hero__desc">
-            Manage donation requests, beneficiaries, and verification from one place.
-          </p>
+  if (error && !data) {
+    return (
+      <div className="ngo-page ngo-module page-route ngo-dashboard-v2">
+        <div className="ngo-dash-error" role="alert">
+          <AlertCircle size={20} />
+          <div>
+            <strong>Could not load dashboard</strong>
+            <p>{error}</p>
+          </div>
+          <button type="button" className="ngo-btn ngo-btn--secondary" onClick={reload}>Retry</button>
         </div>
-        <div className="ngo-dash-hero__visual" aria-hidden="true">
-          <div className="ngo-dash-hero__float">
-            <Building2 size={48} strokeWidth={1.5} />
+      </div>
+    );
+  }
+
+  const kpis = (data?.kpis || []).slice(0, 6);
+  const activities = data?.recent_activity || [];
+  const pending = data?.pending_requests || [];
+  const impact = data?.impact_snapshot || {};
+
+  return (
+    <div className="ngo-page ngo-module page-route ngo-dashboard-v2">
+      <header className="ngo-dash-v2-header">
+        <div className="ngo-dash-v2-header__lead">
+          <AjaBrandMark size="hero" className="ngo-dash-v2-header__mark" />
+          <div className="ngo-dash-v2-header__copy">
+            <p className="ngo-dash-v2-header__eyebrow">AJA Abayahastham</p>
+            <h1>Welcome back, {ngoName}</h1>
+            <p>Here&apos;s what&apos;s happening with your organization today.</p>
           </div>
         </div>
+        <div className="ngo-dash-v2-header__actions">
+          {suspended ? (
+            <button type="button" className="ngo-btn ngo-btn--secondary" onClick={() => navigate('/dashboard/ngo-profile')}>
+              View Profile
+            </button>
+          ) : verified ? (
+            <button type="button" className="ngo-btn ngo-btn--primary" onClick={() => navigate('/dashboard/ngo-programs')}>
+              <Layers size={16} /> View Programs
+            </button>
+          ) : (
+            <button type="button" className="ngo-btn ngo-btn--primary" onClick={() => navigate('/dashboard/ngo-verify')}>
+              <Shield size={16} /> Complete Verification
+            </button>
+          )}
+        </div>
+      </header>
+
+      <section className={`ngo-dash-v2-verify${verified ? ' is-verified' : ''}${suspended ? ' is-suspended' : ''}`}>
+        {suspended ? (
+          <>
+            <div className="ngo-dash-v2-verify__icon ngo-dash-v2-verify__icon--danger">
+              <Lock size={22} />
+            </div>
+            <div className="ngo-dash-v2-verify__body">
+              <strong>Account Suspended</strong>
+              <p>{verificationMessage}</p>
+            </div>
+          </>
+        ) : verified ? (
+          <>
+            <div className="ngo-dash-v2-verify__icon ngo-dash-v2-verify__icon--success">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="ngo-dash-v2-verify__body">
+              <strong>Verified NGO</strong>
+              <p>Your organization profile has been verified.</p>
+            </div>
+            <div className="ngo-dash-v2-verify__actions">
+              <button type="button" className="ngo-btn ngo-btn--secondary" onClick={() => navigate('/dashboard/ngo-profile')}>
+                View NGO Profile
+              </button>
+              <button type="button" className="ngo-btn ngo-btn--ghost" onClick={() => navigate('/dashboard/ngo-verify')}>
+                View Documents
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="ngo-dash-v2-verify__icon ngo-dash-v2-verify__icon--warn">
+              <Shield size={22} />
+            </div>
+            <div className="ngo-dash-v2-verify__body">
+              <strong>{submitted ? 'Verification Under Review' : verificationStatus === 'rejected' ? 'Verification Rejected' : 'Verification Required'}</strong>
+              <p>{verificationMessage}</p>
+            </div>
+            {!submitted && verificationStatus !== 'rejected' && (
+              <button type="button" className="ngo-btn ngo-btn--primary" onClick={() => navigate('/dashboard/ngo-verify')}>
+                Complete Verification
+              </button>
+            )}
+            {verificationStatus === 'rejected' && (
+              <button type="button" className="ngo-btn ngo-btn--primary" onClick={() => navigate('/dashboard/ngo-verify')}>
+                Resubmit Documents
+              </button>
+            )}
+          </>
+        )}
       </section>
 
-      {/* Verification CTA */}
-      {!verified && !submitted && (
-        <section className="ngo-dash-verify ngo-dash-animate ngo-dash-animate--delay-1" aria-labelledby="ngo-verify-title">
-          <div className="ngo-dash-verify__left">
-            <div className="ngo-dash-verify__icon">
-              <Shield size={28} strokeWidth={1.75} />
-            </div>
-            <div>
-              <h2 id="ngo-verify-title">Complete NGO Verification</h2>
-              <p>Verify your organization to request donations and manage beneficiaries on the platform.</p>
-              <ul className="ngo-dash-verify__benefits">
-                <li><CheckCircle size={14} /> Verified NGO Badge</li>
-                <li><CheckCircle size={14} /> Access Donation Requests</li>
-                <li><CheckCircle size={14} /> Financial Assistance Programs</li>
-              </ul>
-            </div>
-          </div>
-          <button type="button" className="ngo-dash-btn ngo-dash-btn--primary" onClick={() => navigate('/dashboard/ngo-verify')}>
-            Complete Verification
+      {!verified && (
+        <section className="ngo-dash-v2-unverified-guide">
+          <h2>Getting Started</h2>
+          <p>Until your NGO is verified, you can use Dashboard, Verification, Profile, Settings, and Notifications.</p>
+          <ul>
+            <li>Upload required documents in Verification</li>
+            <li>Keep your profile and contact details up to date</li>
+            <li>Track review status from this dashboard</li>
+          </ul>
+          <button type="button" className="ngo-btn ngo-btn--primary" onClick={() => navigate('/dashboard/ngo-verify')}>
+            Go to Verification
           </button>
         </section>
       )}
 
-      {submitted && (
-        <section className="ngo-verify-review-banner ngo-dash-animate ngo-dash-animate--delay-1" role="status" aria-live="polite">
-          <div className="ngo-verify-review-banner__content">
-            <h3>Verification Under Review</h3>
-            <p>
-              Thank you for submitting your documentation. The verification process typically takes 24–48 hours.
-              We will notify you via email as soon as your account is fully verified.
-            </p>
-          </div>
-          <div className="ngo-verify-review-banner__status" aria-disabled="true">
-            <Clock size={18} aria-hidden="true" />
-            <span>Documents Under Review</span>
-          </div>
-        </section>
-      )}
-
-      {/* Statistics */}
-      <section className="ngo-dash-stats ngo-dash-animate ngo-dash-animate--delay-2" aria-label="Dashboard statistics">
-        {statCards.map((card) => (
-          <article key={card.label} className={`ngo-dash-stat ngo-dash-stat--${card.accent}`}>
-            <div className="ngo-dash-stat__top">
-              <span className="ngo-dash-stat__emoji" aria-hidden="true">{card.emoji}</span>
-              <div className={`ngo-dash-stat__icon ngo-dash-stat__icon--${card.accent}`}>
-                <card.icon size={20} strokeWidth={2} />
-              </div>
-            </div>
-            {card.badge ? (
-              <span className={`ngo-dash-badge ${card.badge === 'Verified' ? 'ngo-dash-badge--approved' : 'ngo-dash-badge--review'}`}>
-                {card.badge}
-              </span>
-            ) : (
-              <p className="ngo-dash-stat__value">{card.value}</p>
-            )}
-            <p className="ngo-dash-stat__label">{card.label}</p>
-            <p className="ngo-dash-stat__trend">
-              <TrendingUp size={12} aria-hidden="true" />
-              {card.trend}
-            </p>
-          </article>
-        ))}
+      {verified && !suspended && (
+        <>
+      <section className="ngo-dash-v2-kpis" aria-label="Key metrics">
+        {kpis.map((kpi) => <KpiCard key={kpi.id} kpi={kpi} />)}
       </section>
 
-      {/* Quick Actions */}
-      <section className="ngo-dash-section ngo-dash-animate ngo-dash-animate--delay-3">
-        <h2 className="ngo-dash-section__title">Quick Actions</h2>
-        <div className="ngo-dash-actions">
-          {quickActions.map((action) => (
+      <div className="ngo-dash-v2-toolbar">
+        <h2>Support Overview</h2>
+        <div className="ngo-dash-v2-period">
+          {PERIOD_OPTIONS.map((opt) => (
             <button
-              key={action.title}
+              key={opt.id}
               type="button"
-              className="ngo-dash-action-card"
-              disabled={action.disabled}
-              onClick={() => navigate(action.path)}
+              className={`ngo-dash-v2-period__btn${period === opt.id ? ' is-active' : ''}`}
+              onClick={() => changePeriod(opt.id)}
             >
-              <span className="ngo-dash-action-card__emoji" aria-hidden="true">{action.emoji}</span>
-              <span className="ngo-dash-action-card__icon">
-                <action.icon size={18} strokeWidth={2} />
-              </span>
-              <strong>{action.title}</strong>
-              <span className="ngo-dash-action-card__desc">{action.desc}</span>
-              <span className="ngo-dash-action-card__arrow">
-                {action.arrow} <ArrowRight size={14} />
-              </span>
+              {opt.label}
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="ngo-dash-v2-charts">
+        <section className="ngo-dash-v2-card">
+          <div className="ngo-dash-v2-card__head">
+            <h3>Support Received</h3>
+            <span className="ngo-dash-v2-card__meta">Funds &amp; items over time</span>
+          </div>
+          {trendData.some((d) => d.value > 0) ? (
+            <DonationTrendChart data={trendData} />
+          ) : (
+            <EmptyPanel
+              title="No support data yet"
+              description="Approved fund requests and item allocations will appear here."
+            />
+          )}
+        </section>
+
+        <section className="ngo-dash-v2-card">
+          <div className="ngo-dash-v2-card__head">
+            <h3>Support by Type</h3>
+            <span className="ngo-dash-v2-card__meta">Category breakdown</span>
+          </div>
+          {typeData.length ? (
+            <DonationDistributionChart data={typeData} />
+          ) : (
+            <EmptyPanel
+              title="No category data"
+              description="Support breakdown will appear once you receive approved assistance."
+            />
+          )}
+        </section>
+      </div>
+
+      <div className="ngo-dash-v2-grid">
+        <section className="ngo-dash-v2-card">
+          <div className="ngo-dash-v2-card__head">
+            <h3>Recent Activity</h3>
+            <button type="button" className="ngo-link-btn" onClick={() => navigate('/dashboard/ngo-my-requests')}>
+              View all <ArrowRight size={14} />
+            </button>
+          </div>
+          {activities.length ? (
+            <ul className="ngo-activity-list">
+              {activities.map((item) => (
+                <li key={item.id} className="ngo-activity-list__item">
+                  <div className="ngo-activity-list__main">
+                    <strong>{item.title}</strong>
+                    <p>{item.description}</p>
+                  </div>
+                  <div className="ngo-activity-list__meta">
+                    <span>{item.amount_display}</span>
+                    <StatusBadge status={item.status} />
+                    <time>{item.relative_time}</time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyPanel title="No activity yet" description="Request updates and allocations will show here." />
+          )}
+        </section>
+
+        <section className="ngo-dash-v2-card">
+          <div className="ngo-dash-v2-card__head">
+            <h3>Pending Requests</h3>
+            <button type="button" className="ngo-link-btn" onClick={() => navigate('/dashboard/ngo-my-requests')}>
+              View all <ArrowRight size={14} />
+            </button>
+          </div>
+          {pending.length ? (
+            <ul className="ngo-pending-list">
+              {pending.map((item) => (
+                <li key={`${item.request_type}-${item.id}`} className="ngo-pending-list__item">
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.amount_display} · {item.relative_time}</p>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyPanel title="No pending requests" description="All caught up — no requests awaiting review." />
+          )}
+        </section>
+      </div>
+
+      <section className="ngo-dash-v2-impact">
+        <div>
+          <h3>Impact Snapshot</h3>
+          <p>Real outcomes from your approved requests and beneficiaries.</p>
+        </div>
+        <div className="ngo-dash-v2-impact__stats">
+          <div><strong>{impact.beneficiaries_helped ?? 0}</strong><span>Beneficiaries</span></div>
+          <div><strong>₹{Number(impact.funds_distributed || 0).toLocaleString('en-IN')}</strong><span>Funds received</span></div>
+          <div><strong>{impact.items_distributed ?? 0}</strong><span>Items allocated</span></div>
+          <div><strong>{impact.approved_requests ?? 0}</strong><span>Approved requests</span></div>
+        </div>
+        <button type="button" className="ngo-btn ngo-btn--secondary" onClick={() => navigate('/dashboard/ngo-reports')} disabled={!verified}>
+          {verified ? 'View Impact Report' : <><Lock size={14} /> Verify to view reports</>}
+        </button>
       </section>
 
-      {/* Main grid: content + timeline */}
-      <div className="ngo-dash-layout ngo-dash-animate ngo-dash-animate--delay-4">
-        <div className="ngo-dash-layout__main">
-          {/* Notifications */}
-          <section className="ngo-dash-panel">
-            <div className="ngo-dash-panel__head">
-              <h2 className="ngo-dash-section__title">Recent Notifications</h2>
-              <button type="button" className="ngo-dash-link" onClick={() => navigate('/dashboard/ngo-notifications')}>
-                View all
-              </button>
-            </div>
-            {notifs.length ? (
-              <div className="ngo-dash-notif-list">
-                {notifs.map((n) => (
-                  <article key={n.id} className={`ngo-dash-notif ${n.read ? '' : 'is-unread'}`}>
-                    <div className={`ngo-dash-notif__status-dot ngo-dash-notif__status-dot--${notificationStatusClass(n.title).replace('ngo-dash-badge--', '')}`} aria-hidden="true" />
-                    <div className="ngo-dash-notif__icon">
-                      <NotifIcon name={n.icon} size={18} />
-                    </div>
-                    <div className="ngo-dash-notif__body">
-                      <strong>{n.title}</strong>
-                      <p>{n.message}</p>
-                      <span className="ngo-dash-notif__time">{n.time}</span>
-                    </div>
-                    <span className={`ngo-dash-badge ${notificationStatusClass(n.title)}`}>
-                      {n.title.toLowerCase().includes('approved') ? 'Approved'
-                        : n.title.toLowerCase().includes('review') ? 'Review'
-                        : n.title.toLowerCase().includes('verification') ? 'Pending'
-                        : 'Update'}
-                    </span>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="ngo-dash-empty">
-                <div className="ngo-dash-empty__illus"><Bell size={40} strokeWidth={1.25} /></div>
-                <h3>No notifications yet</h3>
-                <p>Updates about your requests and verification will appear here.</p>
-              </div>
-            )}
-          </section>
-
-          {/* Recent Requests */}
-          <section className="ngo-dash-panel">
-            <div className="ngo-dash-panel__head">
-              <h2 className="ngo-dash-section__title">Recent Requests</h2>
-              <button type="button" className="ngo-dash-link" onClick={() => navigate('/dashboard/ngo-my-requests')}>
-                View all
-              </button>
-            </div>
-            {recentReqs.length ? (
-              <div className="ngo-dash-request-list">
-                {recentReqs.map((r) => (
-                  <article key={r.id} className="ngo-dash-request-card">
-                    <div className="ngo-dash-request-card__head">
-                      <span className="ngo-dash-request-card__id">{r.id}</span>
-                      <span className={`ngo-dash-badge ${requestStatusClass(r.status)}`}>{r.status}</span>
-                    </div>
-                    <div className="ngo-dash-request-card__meta">
-                      <span><FileText size={14} /> {r.category || r.type}</span>
-                      <span>{formatRequestAmount(r)}</span>
-                      <span>{r.appliedDate}</span>
-                    </div>
-                    <p className="ngo-dash-request-card__purpose">{r.purpose}</p>
-                    <button
-                      type="button"
-                      className="ngo-dash-btn ngo-dash-btn--ghost"
-                      onClick={() => navigate('/dashboard/ngo-my-requests')}
-                    >
-                      View Details <ArrowRight size={14} />
-                    </button>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="ngo-dash-empty">
-                <div className="ngo-dash-empty__illus"><Package size={40} strokeWidth={1.25} /></div>
-                <h3>No requests yet</h3>
-                <p>Submit your first donation request once verification is complete.</p>
-                <button
-                  type="button"
-                  className="ngo-dash-btn ngo-dash-btn--primary"
-                  disabled={!verified}
-                  onClick={() => navigate('/dashboard/ngo-request-donations')}
-                >
-                  Request Donation
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* Beneficiary Snapshot */}
-          <section className="ngo-dash-panel ngo-dash-panel--snapshot">
-            <div className="ngo-dash-panel__head">
-              <h2 className="ngo-dash-section__title">Beneficiary Snapshot</h2>
-              {verified && (
-                <button type="button" className="ngo-dash-link" onClick={() => navigate('/dashboard/ngo-beneficiaries')}>
-                  View all
-                </button>
-              )}
-            </div>
-            {verified && ngoBeneficiaries?.length ? (
-              <div className="ngo-dash-snapshot">
-                <div className="ngo-dash-snapshot__total">
-                  <span className="ngo-dash-snapshot__total-num">{ngoBeneficiaries.length}</span>
-                  <span className="ngo-dash-snapshot__total-label">Total Beneficiaries</span>
-                </div>
-                <div className="ngo-dash-snapshot__rings">
-                  {beneficiaryCats.map((cat) => (
-                    <CircularProgress
-                      key={cat.id}
-                      pct={cat.pct}
-                      color={cat.color}
-                      label={cat.label}
-                      count={cat.count}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="ngo-dash-empty ngo-dash-empty--compact">
-                <div className="ngo-dash-empty__illus"><Users size={36} strokeWidth={1.25} /></div>
-                <h3>{verified ? 'No beneficiaries yet' : 'Beneficiaries locked'}</h3>
-                <p>
-                  {verified
-                    ? 'Add beneficiaries after your first approved donation request.'
-                    : 'Complete verification to manage beneficiaries.'}
-                </p>
-                {!verified && (
-                  <button type="button" className="ngo-dash-btn ngo-dash-btn--outline" onClick={() => navigate('/dashboard/ngo-verify')}>
-                    Complete Verification
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
+      <section className="ngo-dash-v2-quick">
+        <h3>Quick Actions</h3>
+        <div className="ngo-dash-v2-quick__grid">
+          <button type="button" className="ngo-quick-card" disabled={!verified} onClick={() => navigate('/dashboard/ngo-request-funds')}>
+            <Banknote size={18} /> Request Funds {!verified && <Lock size={14} />}
+          </button>
+          <button type="button" className="ngo-quick-card" disabled={!verified} onClick={() => navigate('/dashboard/ngo-request-donations')}>
+            <Package size={18} /> Request Items {!verified && <Lock size={14} />}
+          </button>
+          <button type="button" className="ngo-quick-card" disabled={!verified} onClick={() => navigate('/dashboard/ngo-beneficiaries')}>
+            <Users size={18} /> Beneficiaries {!verified && <Lock size={14} />}
+          </button>
+          <button type="button" className="ngo-quick-card" onClick={() => navigate('/dashboard/ngo-programs')}>
+            <Layers size={18} /> Programs
+          </button>
         </div>
+      </section>
+        </>
+      )}
 
-        {/* Activity Timeline */}
-        <aside className="ngo-dash-timeline-panel">
-          <h2 className="ngo-dash-section__title">Activity Timeline</h2>
-          <ol className="ngo-dash-timeline">
-            {timeline.map((item, i) => (
-              <li key={item.id} className={`ngo-dash-timeline__item ${i === 0 ? 'is-current' : ''}`}>
-                <div className="ngo-dash-timeline__marker">
-                  <div className="ngo-dash-timeline__dot">
-                    <NotifIcon name={item.icon} size={14} />
-                  </div>
-                  {i < timeline.length - 1 && <div className="ngo-dash-timeline__line" aria-hidden="true" />}
-                </div>
-                <div className="ngo-dash-timeline__content">
-                  <span className="ngo-dash-timeline__time">{item.time}</span>
-                  <strong>{item.label}</strong>
-                  <p>{item.detail}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </div>
+      {loading && (
+        <div className="ngo-dash-v2-loading" role="status">
+          <Loader2 size={18} className="ngo-spin" /> Updating…
+        </div>
+      )}
     </div>
   );
 }

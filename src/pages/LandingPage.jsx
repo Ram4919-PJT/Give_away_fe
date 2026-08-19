@@ -31,69 +31,15 @@ import {
 } from 'lucide-react';
 import GiveAwayHeader from '../components/layout/GiveAwayHeader';
 import { useToast } from '../components/ui/Toast';
+import { usePublicContent } from '../hooks/usePublicContent';
+import ApiEmptyState from '../components/ui/ApiEmptyState';
+import LocationBanner from '../components/location/LocationBanner';
 
-// ==========================================
-// 1. TEAM MEMBERS DATA
-// ==========================================
-const TEAM_MEMBERS = [
-  {
-    name: 'Ramesh Kumar',
-    role: 'Founder & Director',
-    bio: 'Passionate about teamwork and social impact.',
-    image: '/assets/images/Team_01_Ramesh_Kumar.png',
-    linkedin: '#'
-  },
-  {
-    name: 'Divya Singh',
-    role: 'Operations Head',
-    bio: 'Ensures everything runs smoothly and transparently.',
-    image: '/assets/images/Team_02_Divya_Singh.png',
-    linkedin: '#'
-  },
-  {
-    name: 'Arjun Patel',
-    role: 'Partnership Manager',
-    bio: 'Builds strong partnerships for greater impact.',
-    image: '/assets/images/Team_03_Arjun_Patel.png',
-    linkedin: '#'
-  },
-  {
-    name: 'Sneha Reddy',
-    role: 'Community Lead',
-    bio: 'Works closely with communities to create real change.',
-    image: '/assets/images/Team_04_Sneha_Reddy.png',
-    linkedin: '#'
-  }
-];
-
-// ==========================================
-// 2. TESTIMONIALS / VOICES OF CHANGE DATA
-// ==========================================
-const VOICES_OF_CHANGE = [
-  {
-    quote: "Thanks to the support, my daughter can now continue her education. This changed our lives.",
-    name: "Kavitha R.",
-    role: "Beneficiary"
-  },
-  {
-    quote: "The food and care we received during the tough times gave us hope and strength.",
-    name: "Ramesh M.",
-    role: "Beneficiary"
-  },
-  {
-    quote: "Their transparency and commitment inspire us to keep supporting. You see the proof.",
-    name: "Anjali P.",
-    role: "Donor"
-  }
-];
-
-// ==========================================
-// MAIN LANDING PAGE COMPONENT
-// ==========================================
 export default function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const { programs, stats, loading: publicLoading } = usePublicContent();
 
   // Contact form state
   const [formData, setFormData] = useState({
@@ -120,14 +66,7 @@ export default function LandingPage() {
       showToast('Please fill in all required fields.', 'error');
       return;
     }
-
-    setSubmitting(true);
-    // Simulate API submission
-    setTimeout(() => {
-      setSubmitting(false);
-      showToast('Thank you! Your message has been sent successfully.', 'success');
-      setFormData({ fullName: '', email: '', subject: 'general', message: '' });
-    }, 800);
+    showToast('Contact submissions are not configured yet. Please email info@ajaabayahastham.org directly.', 'info');
   };
 
   return (
@@ -171,6 +110,8 @@ export default function LandingPage() {
                   <span>I Need Support</span>
                 </button>
               </div>
+
+              <LocationBanner prompt="Find causes near you" />
 
               {/* Security Strip */}
               <div className="pt-1 flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0B57D0]">
@@ -378,33 +319,13 @@ export default function LandingPage() {
             People with passion. Purpose in action.
           </h2>
 
-          {/* 4 Team Cards Grid */}
+          {/* 4 Team Cards Grid — populated when team API is available */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {TEAM_MEMBERS.map((member) => (
-              <div
-                key={member.name}
-                className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center text-center hover:border-[#1268E8]/40 transition group"
-              >
-                <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-[#EEF5FF] shadow-inner shrink-0">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                </div>
-                <h3 className="text-lg font-bold text-[#0B245B]">{member.name}</h3>
-                <p className="text-xs font-bold text-[#1268E8] mb-2">{member.role}</p>
-                <p className="text-xs text-[#49638F] leading-relaxed mb-4">{member.bio}</p>
-                <a
-                  href={member.linkedin}
-                  onClick={(e) => e.preventDefault()}
-                  className="w-8 h-8 rounded-full bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center hover:bg-[#1268E8] hover:text-white transition"
-                  aria-label={`${member.name} LinkedIn Profile`}
-                >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-              </div>
-            ))}
+            <ApiEmptyState
+              compact
+              title="Team profiles coming soon"
+              description="Team member information will be loaded from the platform once published."
+            />
           </div>
 
           {/* Transparency Banner Below Team */}
@@ -502,31 +423,36 @@ export default function LandingPage() {
             />
           </div>
 
-          {/* 4 Impact Counters Row */}
+          {/* 4 Impact Counters Row — live from API */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
-              <Users className="w-8 h-8 text-[#1268E8] mb-2" />
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">12,450+</div>
-              <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Happy Donors</div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
-              <CheckCircle2 className="w-8 h-8 text-[#1268E8] mb-2" />
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">25,780+</div>
-              <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Donations Delivered</div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
-              <Heart className="w-8 h-8 text-[#1268E8] mb-2" />
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">18,600+</div>
-              <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Lives Impacted</div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
-              <ShieldCheck className="w-8 h-8 text-[#1268E8] mb-2" />
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">320+</div>
-              <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Verified NGOs &amp; Partners</div>
-            </div>
+            {publicLoading ? (
+              <p className="col-span-full text-sm text-[#49638F]">Loading impact data…</p>
+            ) : stats ? (
+              <>
+                <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
+                  <Users className="w-8 h-8 text-[#1268E8] mb-2" />
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">{stats.donors.toLocaleString('en-IN')}</div>
+                  <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Registered Donors</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
+                  <CheckCircle2 className="w-8 h-8 text-[#1268E8] mb-2" />
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">{stats.donations_delivered.toLocaleString('en-IN')}</div>
+                  <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Donations Recorded</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
+                  <Heart className="w-8 h-8 text-[#1268E8] mb-2" />
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">{stats.lives_impacted.toLocaleString('en-IN')}</div>
+                  <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Receivers Supported</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col items-center">
+                  <ShieldCheck className="w-8 h-8 text-[#1268E8] mb-2" />
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#0B245B]">{stats.verified_ngos.toLocaleString('en-IN')}</div>
+                  <div className="text-xs sm:text-sm text-[#49638F] font-semibold">Verified NGO Partners</div>
+                </div>
+              </>
+            ) : (
+              <ApiEmptyState compact title="Impact data unavailable" description="Platform statistics will appear here once the service is connected." />
+            )}
           </div>
 
           {/* Where Your Kindness Reaches */}
@@ -535,41 +461,23 @@ export default function LandingPage() {
             <p className="text-sm text-[#49638F] font-medium mb-8">We work across multiple causes to bring hope and change.</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-              {/* Education */}
-              <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center">
-                  <BookOpen className="w-5 h-5" />
+              {publicLoading ? (
+                <p className="col-span-full text-sm text-[#49638F]">Loading programs…</p>
+              ) : programs.length === 0 ? (
+                <div className="col-span-full">
+                  <ApiEmptyState compact title="No active programs yet" description="Cause areas will be listed here when programs are published." />
                 </div>
-                <h4 className="text-base font-bold text-[#0B245B]">Education</h4>
-                <p className="text-xs text-[#49638F]">Supporting quality education for all children.</p>
-              </div>
-
-              {/* Healthcare */}
-              <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5" />
-                </div>
-                <h4 className="text-base font-bold text-[#0B245B]">Healthcare</h4>
-                <p className="text-xs text-[#49638F]">Providing medical care and essential health support.</p>
-              </div>
-
-              {/* Food & Shelter */}
-              <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center">
-                  <Utensils className="w-5 h-5" />
-                </div>
-                <h4 className="text-base font-bold text-[#0B245B]">Food &amp; Shelter</h4>
-                <p className="text-xs text-[#49638F]">Ensuring no one sleeps hungry or without shelter.</p>
-              </div>
-
-              {/* Women Empowerment */}
-              <div className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center">
-                  <Users className="w-5 h-5" />
-                </div>
-                <h4 className="text-base font-bold text-[#0B245B]">Women Empowerment</h4>
-                <p className="text-xs text-[#49638F]">Empowering women to build independent futures.</p>
-              </div>
+              ) : (
+                programs.slice(0, 4).map((prog) => (
+                  <div key={prog.program_id} className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#EEF5FF] text-[#1268E8] flex items-center justify-center">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-base font-bold text-[#0B245B]">{prog.program_name}</h4>
+                    <p className="text-xs text-[#49638F]">{prog.description || prog.category || 'Support this cause on Give Away.'}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -579,17 +487,11 @@ export default function LandingPage() {
             <p className="text-sm text-[#49638F] font-medium mb-8">Stories from people whose lives have been touched.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              {VOICES_OF_CHANGE.map((v) => (
-                <div key={v.name} className="bg-white rounded-2xl p-6 border border-[#DCE8FA] shadow-sm flex flex-col justify-between space-y-4">
-                  <p className="text-sm text-[#49638F] font-medium italic leading-relaxed">
-                    &ldquo;{v.quote}&rdquo;
-                  </p>
-                  <div>
-                    <div className="text-sm font-bold text-[#0B245B]">— {v.name}</div>
-                    <div className="text-xs text-[#1268E8] font-semibold">{v.role}</div>
-                  </div>
-                </div>
-              ))}
+              <ApiEmptyState
+                compact
+                title="No stories published yet"
+                description="Impact stories from donors and beneficiaries will appear here when available."
+              />
             </div>
           </div>
         </section>

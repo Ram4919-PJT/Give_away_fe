@@ -4,6 +4,7 @@ import { Menu, X, Search, Bell, ChevronDown, User, Settings, LogOut, BadgeCheck 
 import { getInitials } from '../../utils/receiverHelpers';
 import { isNgoVerified } from '../../context/AppContext';
 import { searchCausesAndNgos } from '../../api/coreClient';
+import AjaBrandMark from '../branding/AjaBrandMark';
 
 function HeaderLogo() {
   return (
@@ -27,7 +28,7 @@ function getRoleRoutes(role) {
 
 function isUserVerified(user, role) {
   if (role === 'ngo') return isNgoVerified(user);
-  if (role === 'donor') return user?.verified === true;
+  if (role === 'donor' || role === 'receiver') return user?.verified === true;
   return false;
 }
 
@@ -48,6 +49,7 @@ export default function DashboardTopbar({
   onToggleMenu,
   onLogout,
   logoutLoading = false,
+  withSidebar = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,6 +65,10 @@ export default function DashboardTopbar({
   const pageTitle = getPageTitle(navItems, location.pathname);
   const showVerified = isUserVerified(user, role);
   const isDonor = role === 'donor';
+  const isReceiver = role === 'receiver';
+  const isNgo = role === 'ngo';
+  const compactHeader = withSidebar && (isDonor || isReceiver || isNgo);
+  const roleLabel = isDonor ? 'Donor' : isReceiver ? 'Receiver' : isNgo ? 'NGO Partner' : null;
 
   useEffect(() => {
     setProfileOpen(false);
@@ -145,14 +151,8 @@ export default function DashboardTopbar({
     navigate(`/dashboard/donor-donate-money?program_id=${program.program_id}`);
   };
 
-  const openNgo = () => {
-    setSearchResults(null);
-    setSearchQuery('');
-    navigate('/dashboard/donor-ngo-partners');
-  };
-
   return (
-    <header className="dash-header">
+    <header className={`dash-header${compactHeader ? ' dash-header--compact' : ''}`}>
       <div className="dash-header__inner">
         <div className="dash-header__left">
           <button
@@ -165,19 +165,37 @@ export default function DashboardTopbar({
             {menuOpen ? <X size={22} strokeWidth={2.25} /> : <Menu size={22} strokeWidth={2.25} />}
           </button>
 
-          <div
-            className="dash-header__brand"
-            onClick={() => navigate('/')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/'); }}
-            role="button"
-            tabIndex={0}
-          >
-            <HeaderLogo />
-            <div className="dash-header__brand-text">
-              <span className="dash-header__title">Give Away</span>
-              <span className="dash-header__subtitle">Serve · Support · Uplift</span>
+          {compactHeader ? (
+            <div className={`dash-header__compact-brand${isNgo ? ' dash-header__compact-brand--ngo' : ''}`}>
+              {isNgo ? (
+                <AjaBrandMark size="sm" className="dash-header__compact-aja-mark" />
+              ) : (
+                <img
+                  src="/assets/donor/Aja_Abayahastham_Brand_Logo.png"
+                  alt=""
+                  className="dash-header__compact-logo"
+                  width={32}
+                  height={32}
+                  decoding="async"
+                />
+              )}
+              <h1 className="dash-header__page-title dash-header__page-title--visible">{pageTitle}</h1>
             </div>
-          </div>
+          ) : (
+            <div
+              className="dash-header__brand"
+              onClick={() => navigate('/')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/'); }}
+              role="button"
+              tabIndex={0}
+            >
+              <HeaderLogo />
+              <div className="dash-header__brand-text">
+                <span className="dash-header__title">Give Away</span>
+                <span className="dash-header__subtitle">Serve · Support · Uplift</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="dash-header__center">
@@ -186,10 +204,10 @@ export default function DashboardTopbar({
             <input
               type="search"
               className="dash-header__search-input"
-              placeholder={isDonor ? 'Search for causes, NGOs, campaigns...' : 'Search donations, requests...'}
+              placeholder={isDonor ? 'Search causes and programs…' : 'Search donations, requests...'}
               value={searchQuery}
               onChange={handleSearchChange}
-              aria-label={isDonor ? 'Search causes, NGOs, and campaigns' : 'Search donations and requests'}
+              aria-label={isDonor ? 'Search causes and programs' : 'Search donations and requests'}
               autoComplete="off"
             />
             {isDonor && searchResults && (
@@ -200,7 +218,7 @@ export default function DashboardTopbar({
                 {!searchLoading && searchResults.error && (
                   <p className="px-3 py-3 text-sm text-rose-600">Search failed. Try again.</p>
                 )}
-                {!searchLoading && !searchResults.error && !(searchResults.programs?.length || searchResults.ngos?.length) && (
+                {!searchLoading && !searchResults.error && !(searchResults.programs?.length) && (
                   <p className="px-3 py-3 text-sm text-[#49638F]">No matches for “{searchResults.query}”.</p>
                 )}
                 {(searchResults.programs || []).map((p) => (
@@ -208,13 +226,6 @@ export default function DashboardTopbar({
                     <span className="dash-search-results__type">Cause</span>
                     <span className="dash-search-results__title">{p.program_name}</span>
                     <span className="dash-search-results__meta">{p.category}</span>
-                  </button>
-                ))}
-                {(searchResults.ngos || []).map((n) => (
-                  <button key={`n-${n.ngo_id}`} type="button" role="option" onClick={openNgo}>
-                    <span className="dash-search-results__type">NGO</span>
-                    <span className="dash-search-results__title">{n.ngo_name}</span>
-                    <span className="dash-search-results__meta">{n.verification_status}</span>
                   </button>
                 ))}
               </div>
@@ -259,14 +270,15 @@ export default function DashboardTopbar({
               )}
               <span className="dash-header__profile-meta">
                 <span className="dash-header__profile-name">{user.name}</span>
-                {isDonor ? (
-                  <span className="dash-header__role-label">Donor</span>
-                ) : showVerified ? (
+                {roleLabel && (
+                  <span className="dash-header__role-label">{roleLabel}</span>
+                )}
+                {showVerified && (
                   <span className="dash-header__verified">
                     <BadgeCheck size={12} strokeWidth={2.5} />
                     Verified
                   </span>
-                ) : null}
+                )}
               </span>
               <ChevronDown size={16} className="dash-header__chevron" aria-hidden="true" />
             </button>

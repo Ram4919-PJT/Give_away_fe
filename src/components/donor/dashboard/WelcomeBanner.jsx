@@ -17,13 +17,14 @@ export default function WelcomeBanner({ name, impact, loading }) {
       </div>
 
       <div className="dd-hero__visual">
-        <div className="dd-hero__art">
+        <div className="dd-hero__art dd-hero-image-frame">
           <img
             src="/assets/donor/Donor_Dashboard_Heart_Hands_Hero.png"
             alt=""
             width={160}
             height={160}
             decoding="async"
+            className="dd-hero-image"
           />
         </div>
         <div className="dd-impact-chip">

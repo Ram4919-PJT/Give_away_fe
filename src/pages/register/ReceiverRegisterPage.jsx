@@ -131,10 +131,10 @@ function ReceiverRegistrationCard({ onNavigate }) {
         full_name: fullName.trim(),
         email: email.trim(),
         mobile: mobile.trim(),
-        password
+        password,
       });
-      showToast('Account created. Please wait for admin approval before signing in.', 'success');
-      onNavigate('/login');
+      showToast('Account created. Complete verification to request assistance.', 'success');
+      onNavigate('/dashboard/receiver-verify');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -161,7 +161,7 @@ function ReceiverRegistrationCard({ onNavigate }) {
             Create Receiver Account
           </h1>
           <p className="text-[#49638F] text-sm sm:text-[17px] font-medium leading-relaxed max-w-sm mx-auto">
-            Sign up to apply for financial assistance from Aja Abayahastham.
+            Create your account in minutes. Complete identity verification before requesting financial assistance.
           </p>
         </div>
 

@@ -1,14 +1,15 @@
 ﻿import { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useToast } from '../../ui/Toast';
+import { coreClient } from '../../../api/platformApi';
 import { getNgoRequests } from '../../../utils/ngoHelpers';
 import {
   getCategoryById,
   INITIAL_REQUEST_FORM,
-  CONDITION_OPTIONS
 } from '../../../data/ngoDonationCategories';
+import { useStepNavigation } from '../../../hooks/useStepNavigation';
+import { FlowStepFooter, FlowStepPanel } from '../../ui/FlowNav';
 import RequestHero from './RequestHero';
 import RequestStepper from './RequestStepper';
 import RequestGuidelines from './RequestGuidelines';
@@ -22,24 +23,29 @@ import RequestSuccess from './RequestSuccess';
 import RecentRequests from './RecentRequests';
 import InventoryRequestForm from '../inventory/InventoryRequestForm';
 
+const NGO_FOOTER = 'rd-step-footer rd-step-footer--split';
+const NGO_BACK_BTN = 'rd-btn rd-btn--ghost';
+const NGO_PRIMARY_BTN = 'rd-btn rd-btn--primary';
+
 export default function RequestDonationsPage() {
-  const { currentUser, ngoRequests, dispatch } = useApp();
+  const { currentUser, ngoRequests, ngoProfile, refreshPlatformData } = useApp();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const inventoryItem = location.state?.inventoryItem;
 
-  const [step, setStep] = useState(1);
+  const { step, direction, goToStep, goBack, resetStep } = useStepNavigation(1, { max: 6 });
   const [form, setForm] = useState({ ...INITIAL_REQUEST_FORM });
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const requests = getNgoRequests(ngoRequests, currentUser);
 
   const resetFlow = useCallback(() => {
     setForm({ ...INITIAL_REQUEST_FORM });
-    setStep(1);
+    resetStep(1);
     setDetailsModalOpen(false);
-  }, []);
+  }, [resetStep]);
 
   if (inventoryItem) {
     return <InventoryRequestForm inventoryItem={inventoryItem} />;
@@ -66,9 +72,9 @@ export default function RequestDonationsPage() {
       condition: tpl.condition || 'either',
       purpose: tpl.purpose || '',
       priority: tpl.priority || 'Medium',
-      templateId: tpl.id
+      templateId: tpl.id,
     });
-    setStep(2);
+    goToStep(2);
     showToast(`Template applied: ${tpl.title}`, 'success');
   };
 
@@ -78,51 +84,47 @@ export default function RequestDonationsPage() {
       category: id,
       subcategories: prev.category === id ? prev.subcategories : [],
       templateId: prev.category === id ? prev.templateId : null,
-      condition: id === 'clothes' ? (prev.condition || 'either') : prev.condition
+      condition: id === 'clothes' ? (prev.condition || 'either') : prev.condition,
     }));
   };
 
   const goToDetails = () => {
-    setStep(4);
+    goToStep(4);
     setDetailsModalOpen(true);
   };
 
   const handleDetailsContinue = () => {
     setDetailsModalOpen(false);
-    setStep(5);
+    goToStep(5);
   };
 
-  const handleSubmit = () => {
-    const category = getCategoryById(form.category);
-    const purposeText = form.purpose || category?.label || 'Donation Request';
-    const conditionLabel = CONDITION_OPTIONS.find((c) => c.id === form.condition)?.label;
+  const handleReviewBack = () => {
+    goToStep(3);
+  };
 
-    dispatch({
-      type: 'ADD_NGO_REQUEST',
-      payload: {
-        id: 'NGO-REQ-' + Date.now(),
-        ngoEmail: currentUser.email,
-        type: 'Items',
-        category: category?.label || form.category,
-        subcategories: form.subcategories,
-        beneficiaries: form.beneficiaries,
-        condition: form.category === 'clothes' ? conditionLabel : null,
-        title: purposeText.slice(0, 60),
-        purpose: purposeText,
-        quantity: Number(form.quantity) || 0,
-        priority: form.priority,
-        beneficiary: `${form.beneficiaryCount} beneficiaries · ${(form.beneficiaries || []).join(', ') || form.location}`,
-        beneficiaryCount: Number(form.beneficiaryCount),
-        location: form.location,
-        distributionDate: form.deliveryDate,
-        targetDate: form.deliveryDate,
-        notes: [form.description, form.specialInstructions].filter(Boolean).join('\n\n'),
-        status: 'Submitted',
-        appliedDate: new Date().toISOString().split('T')[0]
-      }
-    });
-    setStep(6);
-    showToast('Donation request submitted successfully!', 'success');
+  const handleSubmit = async () => {
+    const category = getCategoryById(form.category);
+    const ngoId = ngoProfile?.ngo_id;
+    if (!ngoId) {
+      showToast('NGO profile not found. Complete registration first.', 'error');
+      return;
+    }
+    const qty = Number(form.quantity) || 1;
+    setSubmitting(true);
+    try {
+      await coreClient.createNgoItemRequest({
+        ngo_id: ngoId,
+        item_category: category?.label || form.category,
+        quantity_requested: qty,
+      });
+      await refreshPlatformData('ngo', currentUser?.email);
+      goToStep(6);
+      showToast('Donation request submitted successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not submit request.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const showSidebar = step < 6;
@@ -137,7 +139,7 @@ export default function RequestDonationsPage() {
       <div className="rd-layout">
         <div className="rd-main-panel">
           {step === 1 && (
-            <section className="rd-step-panel" key="step-category">
+            <FlowStepPanel stepKey="rd-step-1" direction={direction} className="rd-step-panel">
               {showTemplates && (
                 <RequestTemplates activeId={form.templateId} onSelect={applyTemplate} />
               )}
@@ -152,47 +154,43 @@ export default function RequestDonationsPage() {
                 onSelect={handleCategorySelect}
               />
 
-              <footer className="rd-step-footer">
-                <button
-                  type="button"
-                  className="rd-btn rd-btn--primary"
-                  disabled={!form.category}
-                  onClick={() => setStep(2)}
-                >
-                  Continue
-                  <ArrowRight size={18} />
-                </button>
-              </footer>
-            </section>
+              <FlowStepFooter
+                step={step}
+                totalSteps={5}
+                onCancel={() => navigate('/dashboard/ngo-dashboard')}
+                cancelLabel="Cancel"
+                onContinue={() => goToStep(2)}
+                continueDisabled={!form.category}
+                footerClassName={NGO_FOOTER}
+                backButtonClassName={NGO_BACK_BTN}
+                primaryButtonClassName={NGO_PRIMARY_BTN}
+              />
+            </FlowStepPanel>
           )}
 
           {step === 2 && (
-            <>
+            <FlowStepPanel stepKey="rd-step-2" direction={direction}>
               <SubcategoryStep
                 categoryId={form.category}
                 selected={form.subcategories}
                 onToggle={(item) => toggleListValue('subcategories', item)}
               />
-              <footer className="rd-step-footer rd-step-footer--split">
-                <button type="button" className="rd-btn rd-btn--ghost" onClick={() => setStep(1)}>
-                  <ArrowLeft size={16} />
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="rd-btn rd-btn--primary"
-                  disabled={!form.subcategories?.length}
-                  onClick={() => setStep(3)}
-                >
-                  Continue
-                  <ArrowRight size={18} />
-                </button>
-              </footer>
-            </>
+              <FlowStepFooter
+                step={step}
+                totalSteps={5}
+                onBack={goBack}
+                backLabel="Previous"
+                onContinue={() => goToStep(3)}
+                continueDisabled={!form.subcategories?.length}
+                footerClassName={NGO_FOOTER}
+                backButtonClassName={NGO_BACK_BTN}
+                primaryButtonClassName={NGO_PRIMARY_BTN}
+              />
+            </FlowStepPanel>
           )}
 
           {step === 3 && (
-            <>
+            <FlowStepPanel stepKey="rd-step-3" direction={direction}>
               <BeneficiaryStep
                 selected={form.beneficiaries}
                 condition={form.condition}
@@ -200,40 +198,43 @@ export default function RequestDonationsPage() {
                 onToggle={(item) => toggleListValue('beneficiaries', item)}
                 onConditionChange={(id) => patchForm({ condition: id })}
               />
-              <footer className="rd-step-footer rd-step-footer--split">
-                <button type="button" className="rd-btn rd-btn--ghost" onClick={() => setStep(2)}>
-                  <ArrowLeft size={16} />
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="rd-btn rd-btn--primary"
-                  disabled={!form.beneficiaries?.length}
-                  onClick={goToDetails}
-                >
-                  Continue to Details
-                  <ArrowRight size={18} />
-                </button>
-              </footer>
-            </>
+              <FlowStepFooter
+                step={step}
+                totalSteps={5}
+                onBack={goBack}
+                backLabel="Previous"
+                onContinue={goToDetails}
+                continueLabel="Continue to Details"
+                continueDisabled={!form.beneficiaries?.length}
+                footerClassName={NGO_FOOTER}
+                backButtonClassName={NGO_BACK_BTN}
+                primaryButtonClassName={NGO_PRIMARY_BTN}
+              />
+            </FlowStepPanel>
           )}
 
           {step === 5 && (
-            <RequestReview
-              form={form}
-              onEdit={() => {
-                setStep(4);
-                setDetailsModalOpen(true);
-              }}
-              onSubmit={handleSubmit}
-            />
+            <FlowStepPanel stepKey="rd-step-5" direction={direction}>
+              <RequestReview
+                form={form}
+                onEdit={() => {
+                  goToStep(4);
+                  setDetailsModalOpen(true);
+                }}
+                onBack={handleReviewBack}
+                onSubmit={handleSubmit}
+                submitting={submitting}
+              />
+            </FlowStepPanel>
           )}
 
           {step === 6 && (
-            <RequestSuccess
-              onViewRequests={() => navigate('/dashboard/ngo-my-requests')}
-              onCreateAnother={resetFlow}
-            />
+            <FlowStepPanel stepKey="rd-step-6" direction={direction}>
+              <RequestSuccess
+                onViewRequests={() => navigate('/dashboard/ngo-my-requests')}
+                onCreateAnother={resetFlow}
+              />
+            </FlowStepPanel>
           )}
         </div>
 
@@ -246,7 +247,7 @@ export default function RequestDonationsPage() {
           onChange={setForm}
           onClose={() => {
             setDetailsModalOpen(false);
-            if (step === 4) setStep(3);
+            if (step === 4) goToStep(3);
           }}
           onContinue={handleDetailsContinue}
         />

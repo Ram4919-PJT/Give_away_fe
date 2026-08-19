@@ -2,12 +2,14 @@ const IAM_TO_FRONTEND = {
   DONOR: 'donor',
   RECEIVER: 'receiver',
   NGO: 'ngo',
+  SUPER_ADMIN: 'admin',
 };
 
 const FRONTEND_TO_IAM = {
   donor: 'DONOR',
   receiver: 'RECEIVER',
   ngo: 'NGO',
+  admin: 'SUPER_ADMIN',
 };
 
 export const USER_APP_ROLES = ['donor', 'receiver', 'ngo'];
@@ -51,7 +53,8 @@ const FRONTEND_TO_DASHBOARD = {
 };
 
 export function mapRoleFromIam(iamRoleName) {
-  return IAM_TO_FRONTEND[iamRoleName] || null;
+  if (!iamRoleName) return null;
+  return IAM_TO_FRONTEND[String(iamRoleName).toUpperCase()] || null;
 }
 
 export function isUserAppRole(role) {
@@ -63,18 +66,18 @@ export function getDashboardPathForRole(role) {
 }
 
 export function mapIamUser(iamUser) {
-  const roleName = iamUser.role?.role_name || iamUser.role_name;
+  const rawRole = iamUser.role?.role_name || iamUser.role_name;
+  const roleName = rawRole ? String(rawRole).toUpperCase() : null;
+  const rawStatus = iamUser.status;
+  const status = rawStatus ? String(rawStatus).toUpperCase() : 'ACTIVE';
   return {
     userId: iamUser.user_id,
     name: iamUser.full_name,
     email: iamUser.email,
     mobile: iamUser.mobile || '',
     role: mapRoleFromIam(roleName),
-    status: iamUser.status,
+    status,
     memberSince: iamUser.created_at ? String(iamUser.created_at).split('T')[0] : '',
-    verified: false
+    verified: false,
   };
 }
-
-export const ADMIN_PORTAL_MESSAGE =
-  'Admin accounts must sign in through the admin portal, not this app.';

@@ -1,14 +1,6 @@
 import { createContext, useContext, useMemo, useReducer, useEffect, useCallback, useState } from 'react';
 import { createInitialState } from '../data/mockData';
 import {
-  loadVerifications,
-  persistVerifications,
-  loadNgoProfiles,
-  persistNgoProfile,
-  deriveNgoUserFields,
-  VERIFICATIONS_STORAGE_KEY
-} from '../utils/ngoVerificationStore';
-import {
   login as iamLogin,
   register as iamRegister,
   logout as iamLogout,
@@ -19,10 +11,19 @@ import {
   getStoredAccessToken,
   getStoredRefreshToken
 } from '../api/iamClient';
-import { mapIamUser, mapRoleToIam, normalizeMobileInput, isUserAppRole, ADMIN_PORTAL_MESSAGE } from '../utils/roleMap';
+import { mapIamUser, mapRoleToIam, normalizeMobileInput, isUserAppRole } from '../utils/roleMap';
+import { ADMIN_PORTAL_MESSAGE, redirectToAdminPortal } from '../utils/adminPortal';
 import { fetchPlatformData, coreClient, notificationsClient } from '../api/platformApi';
 import { mapDonationFromApi, mapVerificationFromApi, mapAssistanceRequestFromApi, buildAssistanceRequestPayload } from '../api/mappers';
-import { deriveDonorVerificationFromRequests, deriveReceiverVerificationFromRequests } from '../utils/donorVerification';
+import {
+  deriveDonorVerificationFromRequests,
+  deriveReceiverVerificationFromRequests,
+  deriveReceiverVerificationFromProfile,
+  deriveNgoVerificationFromRequests,
+  deriveNgoVerificationFromProfile,
+  deriveProfileVerificationFromStatus,
+  mergeVerificationPatches,
+} from '../utils/donorVerification';
 
 const AppContext = createContext(null);
 
@@ -30,22 +31,12 @@ function getDefaultTab(role) {
   const map = {
     donor: 'donor-dashboard',
     ngo: 'ngo-dashboard',
-    receiver: 'receiver-dashboard'
+    receiver: 'receiver-dashboard',
+    admin: 'donor-dashboard',
   };
   return map[role] || 'donor-dashboard';
 }
 
-function makeNotification(id, title, message, icon = 'bell') {
-  return {
-    id,
-    title,
-    message,
-    time: 'Just now',
-    group: 'today',
-    read: false,
-    icon
-  };
-}
 
 function appReducer(state, action) {
   switch (action.type) {
@@ -76,7 +67,6 @@ function appReducer(state, action) {
       };
     case 'ADD_VERIFICATION': {
       const verifications = [action.payload, ...state.verifications];
-      persistVerifications(verifications);
       return { ...state, verifications };
     }
     case 'UPSERT_NGO_VERIFICATION': {
@@ -93,19 +83,6 @@ function appReducer(state, action) {
       } else {
         verifications = [payload, ...state.verifications];
       }
-      persistVerifications(verifications);
-
-      const ngoNotifications = [
-        makeNotification(
-          `nn-${Date.now()}`,
-          'Verification Submitted',
-          'Your documents have been submitted and are pending admin review.',
-          'clock'
-        ),
-        ...(state.ngoNotifications || [])
-      ];
-
-      persistNgoProfile(email, { verified: 'pending', verificationStatus: 'submitted', status: 'Registered NGO' });
 
       let currentUser = state.currentUser;
       if (state.currentUser?.role === 'ngo' && (state.currentUser.email || '').toLowerCase() === email) {
@@ -121,7 +98,6 @@ function appReducer(state, action) {
       return {
         ...state,
         verifications,
-        ngoNotifications,
         currentUser
       };
     }
@@ -129,7 +105,6 @@ function appReducer(state, action) {
       const verifications = state.verifications.map((v) =>
         v.id === action.payload.id ? { ...v, ...action.payload } : v
       );
-      persistVerifications(verifications);
       return { ...state, verifications };
     }
     case 'UPDATE_NGO':
@@ -175,6 +150,22 @@ function appReducer(state, action) {
         [listKey]: (state[listKey] || []).map((n) => (n.id === id ? { ...n, read: true } : n))
       };
     }
+    case 'MARK_ALL_NOTIFICATIONS_READ': {
+      const { listKey } = action.payload;
+      return {
+        ...state,
+        [listKey]: (state[listKey] || []).map((n) => ({ ...n, read: true })),
+        unreadNotificationCount: 0,
+      };
+    }
+    case 'SET_NOTIFICATION_LIST': {
+      const { listKey, items, unreadCount } = action.payload;
+      return {
+        ...state,
+        [listKey]: items,
+        ...(unreadCount !== undefined ? { unreadNotificationCount: unreadCount } : {}),
+      };
+    }
     default:
       return state;
   }
@@ -190,34 +181,89 @@ export function AppProvider({ children }) {
       currentTab: 'overview',
       editingDonationId: null,
       platformLoading: false,
+      ngoProfile: null,
       ...base,
-      verifications: loadVerifications(base.verifications),
+      verifications: [],
       receiverApplications: []
     };
   });
 
-  const refreshPlatformData = useCallback(async (role) => {
+  const refreshPlatformData = useCallback(async (role, userEmail = '', userId = null) => {
     if (!role) return;
     dispatch({ type: 'SET_PLATFORM_LOADING', payload: true });
     try {
-      const data = await fetchPlatformData(role);
+      const data = await fetchPlatformData(role, userEmail);
       dispatch({ type: 'SET_PLATFORM_DATA', payload: data });
       if (role === 'donor') {
-        const verificationPatch = deriveDonorVerificationFromRequests(data.verifications);
+        const verificationPatch = mergeVerificationPatches(
+          data.kycVerification?.profile_status
+            ? deriveProfileVerificationFromStatus(
+              data.kycVerification.profile_status,
+              data.kycVerification.request,
+            )
+            : deriveDonorVerificationFromRequests(data.verifications, userId),
+        );
         if (verificationPatch) {
           dispatch({ type: 'UPDATE_USER', payload: verificationPatch });
         }
       }
       if (role === 'receiver') {
-        const verificationPatch = deriveReceiverVerificationFromRequests(data.verifications);
+        const verificationPatch = mergeVerificationPatches(
+          deriveReceiverVerificationFromProfile(data.receiverProfile),
+          data.kycVerification?.profile_status
+            ? deriveProfileVerificationFromStatus(data.kycVerification.profile_status, data.kycVerification.request)
+            : deriveReceiverVerificationFromRequests(data.verifications, userId),
+        );
         if (verificationPatch) {
           dispatch({ type: 'UPDATE_USER', payload: verificationPatch });
         }
       }
+      if (role === 'ngo') {
+        const verificationPatch = mergeVerificationPatches(
+          deriveNgoVerificationFromProfile(data.ngoProfile),
+          data.kycVerification?.profile_status
+            ? deriveProfileVerificationFromStatus(data.kycVerification.profile_status, data.kycVerification.request)
+            : deriveNgoVerificationFromRequests(data.verifications, userId),
+        );
+        if (verificationPatch) {
+          dispatch({ type: 'UPDATE_USER', payload: verificationPatch });
+        }
+      }
+    } catch {
+      /* platform data is non-blocking for auth */
     } finally {
       dispatch({ type: 'SET_PLATFORM_LOADING', payload: false });
     }
   }, []);
+
+  const applyAuthenticatedUser = useCallback(async (me) => {
+    const user = mapIamUser(me);
+    if (user.role === 'admin') {
+      clearTokens();
+      redirectToAdminPortal();
+      throw new Error(ADMIN_PORTAL_MESSAGE);
+    }
+    if (!isUserAppRole(user.role)) {
+      clearTokens();
+      throw new Error('This account cannot access the user application.');
+    }
+    if (user.status && user.status !== 'ACTIVE') {
+      clearTokens();
+      const pending = String(user.status).toUpperCase() === 'PENDING';
+      throw new Error(
+        pending
+          ? 'Your account is pending activation. Ask an administrator to activate it from Admin → Users.'
+          : 'Your account is not active. Please contact support.',
+      );
+    }
+    dispatch({ type: 'LOGIN', payload: user });
+    try {
+      await refreshPlatformData(user.role, user.email, user.userId);
+    } catch {
+      /* non-blocking */
+    }
+    return user;
+  }, [refreshPlatformData]);
 
   useEffect(() => {
     let cancelled = false;
@@ -232,21 +278,29 @@ export function AppProvider({ children }) {
       }
 
       try {
-        let token = accessToken;
-        if (refreshToken) {
+        let me = null;
+
+        if (accessToken) {
+          try {
+            me = await getMe(accessToken);
+          } catch {
+            me = null;
+          }
+        }
+
+        if (!me && refreshToken) {
           const tokens = await iamRefresh(refreshToken);
           saveTokens(tokens);
-          token = tokens.access_token;
+          me = await getMe(tokens.access_token);
         }
-        const me = await getMe(token);
+
+        if (!me) {
+          clearTokens();
+          return;
+        }
+
         if (!cancelled) {
-          const user = mapIamUser(me);
-          if (!isUserAppRole(user.role) || (user.status && user.status !== 'ACTIVE')) {
-            clearTokens();
-            return;
-          }
-          dispatch({ type: 'LOGIN', payload: user });
-          await refreshPlatformData(user.role);
+          await applyAuthenticatedUser(me);
         }
       } catch {
         clearTokens();
@@ -257,58 +311,25 @@ export function AppProvider({ children }) {
 
     restoreSession();
     return () => { cancelled = true; };
-  }, [refreshPlatformData]);
-
-  useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key !== VERIFICATIONS_STORAGE_KEY || !e.newValue) return;
-      try {
-        const verifications = JSON.parse(e.newValue);
-        dispatch({ type: 'PATCH_DATA', payload: { verifications } });
-      } catch {
-        /* ignore */
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [applyAuthenticatedUser]);
 
   useEffect(() => {
     const theme = localStorage.getItem('giveaway-theme') || 'light';
     document.documentElement.setAttribute('data-theme', theme);
   }, []);
 
-  useEffect(() => {
-    if (state.currentUser?.role !== 'ngo') return;
-    const email = state.currentUser.email;
-    const profiles = loadNgoProfiles();
-    const derived = deriveNgoUserFields(email, state.verifications, profiles[(email || '').toLowerCase()] || {});
-    const changed =
-      derived.verified !== state.currentUser.verified
-      || derived.verificationStatus !== state.currentUser.verificationStatus
-      || derived.rejectionReason !== state.currentUser.rejectionReason;
-    if (changed) {
-      dispatch({ type: 'UPDATE_USER', payload: derived });
-    }
-  }, [state.verifications, state.currentUser?.role, state.currentUser?.email, state.currentUser?.verified, state.currentUser?.verificationStatus]);
-
   const login = useCallback(async (email, password) => {
     const tokens = await iamLogin(email, password);
     saveTokens(tokens);
     const me = await getMe(tokens.access_token);
-    const user = mapIamUser(me);
-    if (!isUserAppRole(user.role)) {
+    const preview = mapIamUser(me);
+    if (preview.role === 'admin') {
       clearTokens();
+      redirectToAdminPortal();
       throw new Error(ADMIN_PORTAL_MESSAGE);
     }
-    if (user.status && user.status !== 'ACTIVE') {
-      clearTokens();
-      throw new Error('Your account is awaiting admin approval. Please try again after approval.');
-    }
-    dispatch({ type: 'LOGIN', payload: user });
-    await refreshPlatformData(user.role);
-    return user;
-  }, [refreshPlatformData]);
+    return applyAuthenticatedUser(me);
+  }, [applyAuthenticatedUser]);
 
   const register = useCallback(async ({ role, full_name, email, mobile, password, profile = {} }) => {
     const role_name = mapRoleToIam(role);
@@ -326,78 +347,123 @@ export function AppProvider({ children }) {
       email,
       mobile: normalizedMobile,
       password,
-      role_name
+      role_name,
     });
     saveTokens(tokens);
-    try {
-      await coreClient.createVerificationRequest({
-        entity_type: role_name,
-        notes: `${role_name} registration pending admin approval`,
-      });
-    } catch {
-      /* verification queue is best-effort; account remains pending */
-    }
-    try {
-      await iamLogout(tokens.refresh_token);
-    } catch {
-      /* revoke best-effort */
-    }
-    clearTokens();
-    return {
-      pendingApproval: true,
-      name: full_name,
-      email,
-      role,
-      status: 'PENDING',
-      ...profile,
+
+    const me = await getMe(tokens.access_token);
+
+    const ensureProfile = async (createProfile) => {
+      try {
+        await createProfile({
+          full_name,
+          email,
+          mobile: normalizedMobile,
+        });
+      } catch (err) {
+        const message = String(err?.message || '');
+        if (!/already exists/i.test(message)) {
+          throw err;
+        }
+      }
     };
-  }, []);
+
+    if (role === 'receiver') {
+      await ensureProfile(coreClient.createReceiverProfile);
+      const user = await applyAuthenticatedUser(me);
+      return {
+        loggedIn: true,
+        requiresKyc: true,
+        user,
+        name: full_name,
+        email,
+        role,
+        ...profile,
+      };
+    }
+
+    if (role === 'donor') {
+      await ensureProfile(coreClient.createDonorProfile);
+      const user = await applyAuthenticatedUser(me);
+      return {
+        loggedIn: true,
+        user,
+        name: full_name,
+        email,
+        role,
+        ...profile,
+      };
+    }
+
+    if (role === 'ngo') {
+      const user = await applyAuthenticatedUser(me);
+      return {
+        loggedIn: true,
+        requiresKyc: true,
+        user,
+        name: full_name,
+        email,
+        role,
+        status: 'Registered NGO',
+        ...profile,
+      };
+    }
+
+    const user = await applyAuthenticatedUser(me);
+    return { loggedIn: true, user, name: full_name, email, role, ...profile };
+  }, [applyAuthenticatedUser]);
 
   const logout = useCallback(async () => {
     setLogoutLoading(true);
     try {
       const refreshToken = getStoredRefreshToken();
-      await iamLogout(refreshToken);
+      if (refreshToken) {
+        await iamLogout(refreshToken);
+      }
     } catch {
       /* revoke best-effort */
     } finally {
       clearTokens();
       dispatch({ type: 'LOGOUT' });
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       setLogoutLoading(false);
     }
   }, []);
 
-  const submitNgoVerification = useCallback((payload) => {
-    dispatch({ type: 'UPSERT_NGO_VERIFICATION', payload });
-  }, []);
+  const submitNgoVerification = useCallback(async ({ notes }) => {
+    const created = await coreClient.submitNgoVerificationRequest(notes);
+    const mapped = mapVerificationFromApi(created);
+    dispatch({ type: 'ADD_VERIFICATION', payload: mapped });
+    dispatch({ type: 'UPDATE_USER', payload: { verified: 'pending', verificationStatus: 'submitted' } });
+    await refreshPlatformData('ngo', state.currentUser?.email, state.currentUser?.userId);
+    return mapped;
+  }, [refreshPlatformData, state.currentUser?.email]);
 
   const submitDonation = useCallback(async (payload) => {
     const created = await coreClient.createDonation(payload);
     const mapped = mapDonationFromApi(created);
     dispatch({ type: 'ADD_DONATION', payload: mapped });
-    await refreshPlatformData(state.currentUser?.role);
+    await refreshPlatformData(state.currentUser?.role, state.currentUser?.email, state.currentUser?.userId);
     return mapped;
   }, [refreshPlatformData, state.currentUser?.role]);
 
-  const submitDonorVerification = useCallback(async ({ notes }) => {
-    let profile = await coreClient.getMyDonorProfile().catch(() => null);
-    if (!profile) {
-      profile = await coreClient.createDonorProfile({
-        organization_name: state.currentUser?.name || undefined,
-      });
+  const submitDonorVerification = useCallback(async () => {
+    const { createOrResumeVerification, submitVerificationRequest, getKycReadiness } = await import('../api/verificationClient');
+    const req = await createOrResumeVerification();
+    const readiness = await getKycReadiness(req.request_id, { consentGiven: true });
+    if (!readiness.ready) {
+      throw new Error(readiness.errors?.[0]?.message || 'Verification is incomplete');
     }
-    const created = await coreClient.createVerificationRequest({
-      entity_type: 'DONOR',
-      entity_id: profile.donor_profile_id,
-      notes: notes || 'Donor verification request',
+    const updated = await submitVerificationRequest(req.request_id, {
+      consentGiven: true,
+      consentVersion: 'donor-verification-v1',
     });
-    const mapped = mapVerificationFromApi(created);
+    const mapped = mapVerificationFromApi(updated);
     dispatch({ type: 'ADD_VERIFICATION', payload: mapped });
     dispatch({ type: 'UPDATE_USER', payload: { verified: 'pending', verificationStatus: 'submitted' } });
-    await refreshPlatformData('donor');
+    await refreshPlatformData('donor', state.currentUser?.email, state.currentUser?.userId);
     return mapped;
-  }, [refreshPlatformData, state.currentUser?.name]);
+  }, [refreshPlatformData, state.currentUser?.email, state.currentUser?.userId]);
 
   const loadDonorProfile = useCallback(async () => {
     const profile = await coreClient.getMyDonorProfile().catch(() => null);
@@ -419,14 +485,31 @@ export function AppProvider({ children }) {
     const created = await coreClient.createAssistanceRequest(payload);
     const mapped = mapAssistanceRequestFromApi(created);
     dispatch({ type: 'ADD_RECEIVER_APPLICATION', payload: mapped });
-    await refreshPlatformData(state.currentUser?.role);
+    await refreshPlatformData('receiver', state.currentUser?.email, state.currentUser?.userId);
     return mapped;
-  }, [refreshPlatformData, state.currentUser?.role]);
+  }, [refreshPlatformData, state.currentUser?.email, state.currentUser?.userId]);
+
+  const submitAssistanceBankDetails = useCallback(async (applicationId, bankForm) => {
+    const updated = await coreClient.submitAssistanceBankDetails(applicationId, bankForm);
+    const mapped = mapAssistanceRequestFromApi(updated);
+    dispatch({ type: 'UPDATE_RECEIVER_APPLICATION', payload: mapped });
+    await refreshPlatformData('receiver', state.currentUser?.email, state.currentUser?.userId);
+    return mapped;
+  }, [refreshPlatformData, state.currentUser?.email, state.currentUser?.userId]);
 
   const markNotificationReadRemote = useCallback(async (listKey, id) => {
     dispatch({ type: 'MARK_NOTIFICATION_READ', payload: { listKey, id } });
     try {
       await notificationsClient.markNotificationRead(id);
+    } catch {
+      /* optimistic UI */
+    }
+  }, []);
+
+  const markAllNotificationsReadRemote = useCallback(async (listKey) => {
+    dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ', payload: { listKey } });
+    try {
+      await notificationsClient.markAllNotificationsRead();
     } catch {
       /* optimistic UI */
     }
@@ -446,11 +529,13 @@ export function AppProvider({ children }) {
       submitDonorVerification,
       loadDonorProfile,
       submitAssistanceRequest,
+      submitAssistanceBankDetails,
       markNotificationReadRemote,
+      markAllNotificationsReadRemote,
       submitNgoVerification,
       setTab: (tab) => dispatch({ type: 'SET_TAB', payload: tab })
     }),
-    [state, authLoading, logoutLoading, login, register, logout, refreshPlatformData, submitDonation, submitDonorVerification, loadDonorProfile, submitAssistanceRequest, markNotificationReadRemote, submitNgoVerification]
+    [state, authLoading, logoutLoading, login, register, logout, refreshPlatformData, submitDonation, submitDonorVerification, loadDonorProfile, submitAssistanceRequest, submitAssistanceBankDetails, markNotificationReadRemote, markAllNotificationsReadRemote, submitNgoVerification]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -467,12 +552,20 @@ export function getRoleDisplayName(role) {
     donor: 'Donor',
     ngo: 'NGO Partner',
     receiver: 'Receiver',
+    admin: 'Administrator',
   };
   return map[role] || role;
 }
 
 export function isNgoVerified(user) {
   return user?.verified === true;
+}
+
+export function isNgoSuspended(user) {
+  if (!user) return false;
+  if (user.verified === 'suspended') return true;
+  const status = String(user.verificationStatus || user.verification_status || '').toLowerCase();
+  return status === 'suspended';
 }
 
 export function isRoleVerified(user) {
@@ -484,10 +577,15 @@ export function isRoleVerified(user) {
 
 export function getNgoVerificationStatus(user) {
   if (!user) return 'registered';
+  if (isNgoSuspended(user)) return 'suspended';
   if (user.verificationStatus === 'approved' || user.verified === true) return 'verified';
-  if (user.verificationStatus === 'submitted' || user.verified === 'pending') return 'pending';
+  if (
+    user.verificationStatus === 'submitted'
+    || user.verified === 'pending'
+    || user.verificationStatus === 'under_review'
+    || user.verificationStatus === 'documents_submitted'
+  ) return 'pending';
   if (user.verificationStatus === 'rejected' || user.verified === 'rejected') return 'rejected';
-  if (user.verified === 'suspended') return 'suspended';
   return 'registered';
 }
 
@@ -495,4 +593,3 @@ export function isNgoVerificationSubmitted(user) {
   return getNgoVerificationStatus(user) === 'pending';
 }
 
-export { getNgoVerificationProgress } from '../utils/ngoVerificationStore';

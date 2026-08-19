@@ -630,3 +630,348 @@
     display: none;
   }
 }
+
+.receiver-app-status--bank {
+  background: #EEF2FF;
+  color: #4338CA;
+  border: 1px solid #C7D2FE;
+}
+
+.receiver-app-status--payout {
+  background: #FFF7ED;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.receiver-app-card-modern--bank {
+  border-color: #C7D2FE;
+  box-shadow: 0 4px 20px rgba(67, 56, 202, 0.08);
+}
+
+.receiver-app-bank-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFF 100%);
+  border: 1px solid #C7D2FE;
+}
+
+.receiver-app-bank-banner p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #3730A3;
+  line-height: 1.5;
+}
+
+.receiver-app-bank-cta {
+  padding: 1rem;
+  border-radius: 12px;
+  background: #EEF2FF;
+  border: 1px solid #C7D2FE;
+}
+
+.receiver-app-bank-cta h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  color: #312E81;
+}
+
+.receiver-app-bank-cta p {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: #4338CA;
+  line-height: 1.55;
+}
+
+.receiver-app-bank-submitted {
+  padding: 1rem;
+  border-radius: 12px;
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+}
+
+.receiver-app-bank-submitted h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  color: #166534;
+}
+
+.receiver-app-bank-submitted p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #15803D;
+}
+
+.receiver-app-modal__muted {
+  margin-top: 0.35rem !important;
+  color: #64748B !important;
+}
+
+.receiver-app-btn--sm {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Bank disbursement portal modal */
+.bank-portal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.bank-portal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 36, 91, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.bank-portal-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid #DCE8FA;
+  box-shadow: 0 24px 60px rgba(11, 36, 91, 0.18);
+}
+
+.bank-portal-modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem 1.35rem 1rem;
+  border-bottom: 1px solid #EEF4FD;
+}
+
+.bank-portal-modal__header-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1268E8, #0F54BE);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bank-portal-modal__eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1268E8;
+}
+
+.bank-portal-modal__header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0B245B;
+}
+
+.bank-portal-modal__close {
+  margin-left: auto;
+  border: none;
+  background: #F7FAFF;
+  color: #49638F;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-portal-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin: 1rem 1.35rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #F7FAFF;
+  border: 1px solid #DCE8FA;
+}
+
+.bank-portal-summary span {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #49638F;
+}
+
+.bank-portal-summary strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 1rem;
+  color: #0B245B;
+}
+
+.bank-portal-form {
+  padding: 1rem 1.35rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bank-portal-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bank-portal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bank-portal-field span {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0B245B;
+}
+
+.bank-portal-field input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #DCE8FA;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #0B245B;
+  background: #FFFFFF;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.bank-portal-field input:focus {
+  outline: none;
+  border-color: #1268E8;
+  box-shadow: 0 0 0 3px rgba(18, 104, 232, 0.12);
+}
+
+.bank-portal-trust {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: #F7FAFF;
+  border: 1px solid #DCE8FA;
+  color: #49638F;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.bank-portal-trust p {
+  margin: 0;
+}
+
+.bank-portal-error {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+  font-size: 0.8125rem;
+}
+
+.bank-portal-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.bank-portal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bank-portal-btn--primary {
+  background: #1268E8;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(18, 104, 232, 0.22);
+}
+
+.bank-portal-btn--primary:hover:not(:disabled) {
+  background: #0F54BE;
+}
+
+.bank-portal-btn--ghost {
+  background: #fff;
+  border-color: #DCE8FA;
+  color: #49638F;
+}
+
+.bank-portal-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bank-portal-success {
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.bank-portal-success__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: #ECFDF5;
+  color: #16A34A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-portal-success h3 {
+  margin: 0 0 0.5rem;
+  color: #0B245B;
+}
+
+.bank-portal-success p {
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  color: #49638F;
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .bank-portal-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .bank-portal-form__footer {
+    flex-direction: column-reverse;
+  }
+
+  .bank-portal-form__footer .bank-portal-btn {
+    width: 100%;
+  }
+}

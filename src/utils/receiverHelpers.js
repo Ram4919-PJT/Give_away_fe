@@ -68,12 +68,19 @@ export function getCardTimelineIndex(status) {
     'Documents Verified': 1,
     'Under Review': 1,
     Approved: 2,
+    'Add Bank Details': 3,
+    'Processing Payout': 4,
     Assigned: 2,
-    'Funds Released': 3,
-    Completed: 4,
+    'Funds Released': 5,
+    Completed: 5,
     Rejected: -1,
   };
   return map[status] ?? 0;
+}
+
+export function applicationNeedsBankDetails(app) {
+  return app?.needsBankDetails === true
+    || (app?.rawStatus === 'APPROVED' && app?.payoutStatus === 'AWAITING_BANK_DETAILS');
 }
 
 export function applicationStatusClass(status) {
@@ -83,6 +90,8 @@ export function applicationStatusClass(status) {
     'Documents Verified': 'receiver-app-status--submitted',
     'Under Review': 'receiver-app-status--review',
     Approved: 'receiver-app-status--approved',
+    'Add Bank Details': 'receiver-app-status--bank',
+    'Processing Payout': 'receiver-app-status--payout',
     Assigned: 'receiver-app-status--approved',
     'Funds Released': 'receiver-app-status--funds',
     Completed: 'receiver-app-status--completed',

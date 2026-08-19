@@ -10,8 +10,10 @@ import { useToast } from '../ui/Toast';
 import {
   getReceiverApps,
   applicationStatusClass,
-  getCardTimelineIndex
+  getCardTimelineIndex,
+  applicationNeedsBankDetails,
 } from '../../utils/receiverHelpers';
+import ReceiverBankDetailsModal from './ReceiverBankDetailsModal';
 import { formatCurrency } from '../../utils/donorHelpers';
 import {
   ASSISTANCE_TYPE_ICONS,
@@ -51,7 +53,7 @@ function CardTimeline({ status }) {
   );
 }
 
-function ApplicationDetailModal({ app, onClose }) {
+function ApplicationDetailModal({ app, onClose, onAddBankDetails }) {
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -59,13 +61,19 @@ function ApplicationDetailModal({ app, onClose }) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  const docs = app.documents
-    ? Object.entries(app.documents).map(([name, val]) => ({
-        name,
-        filename: typeof val === 'object' ? val.filename : `${name.toLowerCase().replace(/\s+/g, '_')}.pdf`,
-        uploaded: typeof val === 'object' ? val.uploaded : !!val
+  const docs = Array.isArray(app.documents)
+    ? app.documents.map((d) => ({
+        name: d.document_type,
+        filename: d.original_filename || d.document_type,
+        uploaded: true,
       }))
-    : [];
+    : app.documents
+      ? Object.entries(app.documents).map(([name, val]) => ({
+          name,
+          filename: typeof val === 'object' ? val.filename : `${name.toLowerCase().replace(/\s+/g, '_')}.pdf`,
+          uploaded: typeof val === 'object' ? val.uploaded : !!val,
+        }))
+      : [];
 
   return createPortal(
     <div className="receiver-app-modal-overlay" role="presentation">
@@ -90,7 +98,10 @@ function ApplicationDetailModal({ app, onClose }) {
           <dl className="receiver-app-modal__grid">
             <div><dt>Purpose</dt><dd>{app.purpose}</dd></div>
             <div><dt>Requested Amount</dt><dd>{formatCurrency(app.amount)}</dd></div>
-            <div className="receiver-app-modal__full"><dt>Description</dt><dd>{app.description || '—'}</dd></div>
+            {app.approvedAmount != null && app.approvedAmount > 0 && (
+              <div><dt>Approved Amount</dt><dd>{formatCurrency(app.approvedAmount)}</dd></div>
+            )}
+            <div className="receiver-app-modal__full"><dt>Expense Breakdown</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{app.expenseBreakdown || app.description || '—'}</dd></div>
             {app.notes && <div className="receiver-app-modal__full"><dt>Additional Notes</dt><dd>{app.notes}</dd></div>}
           </dl>
 
@@ -109,15 +120,38 @@ function ApplicationDetailModal({ app, onClose }) {
                   <span className="receiver-app-modal__doc-file">{d.filename}</span>
                 </li>
               )) : (
-                <li className="receiver-app-modal__doc-placeholder">Document placeholders (wireframe)</li>
+                <li className="receiver-app-modal__doc-placeholder">No documents attached</li>
               )}
             </ul>
           </section>
 
-          {app.reviewNotes && (
-            <section className="receiver-app-modal__section receiver-app-modal__review">
-              <h3>Review Notes</h3>
-              <p>{app.reviewNotes}</p>
+          {applicationNeedsBankDetails(app) && (
+            <section className="receiver-app-modal__section receiver-app-bank-cta">
+              <h3>Disbursement — Bank Details Required</h3>
+              <p>
+                Your request was approved for {formatCurrency(app.approvedAmount ?? app.amount)}.
+                Add your bank account details to receive the funds.
+              </p>
+              <button
+                type="button"
+                className="receiver-app-btn receiver-app-btn--primary"
+                onClick={() => {
+                  onClose();
+                  onAddBankDetails(app);
+                }}
+              >
+                Open disbursement portal
+              </button>
+            </section>
+          )}
+
+          {app.payoutStatus === 'BANK_DETAILS_SUBMITTED' && (
+            <section className="receiver-app-modal__section receiver-app-bank-submitted">
+              <h3>Bank details on file</h3>
+              <p>
+                {app.bankName} · ****{app.bankAccountLast4 || '····'} · {app.bankIfsc}
+              </p>
+              <p className="receiver-app-modal__muted">Disbursement is being processed by AJA Abayahastham.</p>
             </section>
           )}
 
@@ -127,6 +161,13 @@ function ApplicationDetailModal({ app, onClose }) {
               <p>{app.rejectionReason}</p>
             </section>
           )}
+
+          {app.actionRequiredReason && (
+            <section className="receiver-app-modal__section receiver-app-modal__action">
+              <h3>Action Required</h3>
+              <p>{app.actionRequiredReason}</p>
+            </section>
+          )}
         </div>
 
         <footer className="receiver-app-modal__footer">
@@ -134,7 +175,7 @@ function ApplicationDetailModal({ app, onClose }) {
           <button
             type="button"
             className="receiver-app-btn receiver-app-btn--primary"
-            onClick={() => showToast(`Downloading summary for ${app.id} (demo).`, 'info')}
+            onClick={() => showToast('Download will be available soon.', 'info')}
           >
             <Download size={16} /> Download Summary
           </button>
@@ -145,11 +186,12 @@ function ApplicationDetailModal({ app, onClose }) {
   );
 }
 
-function ApplicationCard({ app, onViewDetails, onDownload }) {
+function ApplicationCard({ app, onViewDetails, onDownload, onAddBankDetails }) {
   const icon = app.assistanceIcon || ASSISTANCE_TYPE_ICONS[app.assistanceType] || '📋';
+  const needsBank = applicationNeedsBankDetails(app);
 
   return (
-    <article className="receiver-app-card-modern">
+    <article className={`receiver-app-card-modern${needsBank ? ' receiver-app-card-modern--bank' : ''}`}>
       <div className="receiver-app-card-modern__head">
         <div>
           <p className="receiver-app-card-modern__id">{app.id}</p>
@@ -164,10 +206,44 @@ function ApplicationCard({ app, onViewDetails, onDownload }) {
 
       <div className="receiver-app-card-modern__meta">
         <span><IndianRupee size={14} /> {formatCurrency(app.amount)}</span>
+        {app.approvedAmount != null && app.approvedAmount > 0 && (
+          <span>Approved: {formatCurrency(app.approvedAmount)}</span>
+        )}
         <span><Calendar size={14} /> {app.appliedDate}</span>
       </div>
 
       <CardTimeline status={app.status} />
+
+      {needsBank && (
+        <div className="receiver-app-bank-banner">
+          <p>
+            <strong>Action required:</strong> Add bank details to receive{' '}
+            {formatCurrency(app.approvedAmount ?? app.amount)}.
+          </p>
+          <button
+            type="button"
+            className="receiver-app-btn receiver-app-btn--primary receiver-app-btn--sm"
+            onClick={() => onAddBankDetails(app)}
+          >
+            Add bank details
+          </button>
+        </div>
+      )}
+
+      {app.needsAction && !needsBank && (
+        <div className="receiver-app-bank-banner">
+          <p>
+            <strong>Action required:</strong> {app.actionRequiredReason || 'Please update your application and resubmit.'}
+          </p>
+          <button
+            type="button"
+            className="receiver-app-btn receiver-app-btn--primary receiver-app-btn--sm"
+            onClick={() => window.location.assign('/dashboard/receiver-apply')}
+          >
+            Fix application
+          </button>
+        </div>
+      )}
 
       <div className="receiver-app-card-modern__actions">
         <button type="button" className="receiver-app-btn receiver-app-btn--primary" onClick={() => onViewDetails(app)}>
@@ -196,15 +272,17 @@ function ApplicationsSkeleton() {
 }
 
 export default function MyApplicationsView() {
-  const { receiverApplications, currentUser } = useApp();
+  const { receiverApplications, currentUser, submitAssistanceBankDetails } = useApp();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All');
   const [sort, setSort] = useState('newest');
   const [detailApp, setDetailApp] = useState(null);
+  const [bankApp, setBankApp] = useState(null);
 
   const apps = getReceiverApps(receiverApplications, currentUser);
 
@@ -216,6 +294,15 @@ export default function MyApplicationsView() {
   const typeOptions = useMemo(() => {
     const types = new Set(apps.map((a) => a.assistanceType));
     return ['All', ...Array.from(types)];
+  }, [apps]);
+
+  const dateOptions = useMemo(() => {
+    const months = new Set(
+      apps
+        .map((a) => (a.appliedDate ? a.appliedDate.slice(0, 7) : null))
+        .filter(Boolean)
+    );
+    return ['All', ...Array.from(months).sort().reverse()];
   }, [apps]);
 
   const filtered = useMemo(() => {
@@ -235,11 +322,17 @@ export default function MyApplicationsView() {
         if (statusFilter === 'Under Review') {
           return ['Under Review', 'Documents Verified'].includes(a.status);
         }
+        if (statusFilter === 'Completed') {
+          return ['Completed', 'Funds Released', 'Processing Payout'].includes(a.status);
+        }
         return a.status === statusFilter;
       });
     }
     if (typeFilter !== 'All') {
       list = list.filter((a) => a.assistanceType === typeFilter);
+    }
+    if (dateFilter !== 'All') {
+      list = list.filter((a) => (a.appliedDate || '').startsWith(dateFilter));
     }
     list.sort((a, b) => {
       const da = new Date(a.appliedDate).getTime();
@@ -247,17 +340,17 @@ export default function MyApplicationsView() {
       return sort === 'newest' ? db - da : da - db;
     });
     return list;
-  }, [apps, search, statusFilter, typeFilter, sort]);
+  }, [apps, search, statusFilter, typeFilter, dateFilter, sort]);
 
   return (
     <div className="receiver-apps-page page-route">
       <header className="receiver-apps-page__header">
         <div>
-          <h1>My Applications</h1>
+          <h1>My Requests</h1>
           <p>Track every financial assistance request submitted to AJA Abayahastham.</p>
         </div>
         <button type="button" className="receiver-app-btn receiver-app-btn--primary" onClick={() => navigate('/dashboard/receiver-apply')}>
-          + New Application
+          + Request Financial Assistance
         </button>
       </header>
 
@@ -284,7 +377,14 @@ export default function MyApplicationsView() {
             <label className="receiver-apps-filter">
               <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
                 {typeOptions.map((t) => (
-                  <option key={t} value={t}>{t === 'All' ? 'All Types' : t}</option>
+                  <option key={t} value={t}>{t === 'All' ? 'All Categories' : t}</option>
+                ))}
+              </select>
+            </label>
+            <label className="receiver-apps-filter">
+              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+                {dateOptions.map((d) => (
+                  <option key={d} value={d}>{d === 'All' ? 'All Dates' : d}</option>
                 ))}
               </select>
             </label>
@@ -307,14 +407,15 @@ export default function MyApplicationsView() {
               key={app.id}
               app={app}
               onViewDetails={setDetailApp}
-              onDownload={(a) => showToast(`Downloading PDF for ${a.id} (demo).`, 'info')}
+              onDownload={() => showToast('Download will be available soon.', 'info')}
+              onAddBankDetails={setBankApp}
             />
           ))}
         </div>
       ) : apps.length ? (
         <div className="receiver-apps-empty receiver-apps-empty--filter">
-          <p>No applications match your filters.</p>
-          <button type="button" className="receiver-app-btn receiver-app-btn--ghost" onClick={() => { setSearch(''); setStatusFilter('All'); setTypeFilter('All'); }}>
+          <p>No requests match your filters.</p>
+          <button type="button" className="receiver-app-btn receiver-app-btn--ghost" onClick={() => { setSearch(''); setStatusFilter('All'); setTypeFilter('All'); setDateFilter('All'); }}>
             Clear filters
           </button>
         </div>
@@ -323,15 +424,33 @@ export default function MyApplicationsView() {
           <div className="receiver-apps-empty__illus" aria-hidden="true">
             <ClipboardList size={48} strokeWidth={1.5} />
           </div>
-          <h2>No Applications Yet</h2>
-          <p>You haven&apos;t submitted any financial assistance requests yet.</p>
+          <h2>No financial assistance requests yet</h2>
+          <p>Submit a request when you need financial support for a specific purpose.</p>
           <button type="button" className="receiver-app-btn receiver-app-btn--primary" onClick={() => navigate('/dashboard/receiver-apply')}>
-            Apply for Assistance
+            Request Financial Assistance
           </button>
         </div>
       )}
 
-      {detailApp && <ApplicationDetailModal app={detailApp} onClose={() => setDetailApp(null)} />}
+      {detailApp && (
+        <ApplicationDetailModal
+          app={detailApp}
+          onClose={() => setDetailApp(null)}
+          onAddBankDetails={setBankApp}
+        />
+      )}
+
+      {bankApp && (
+        <ReceiverBankDetailsModal
+          application={bankApp}
+          onClose={() => setBankApp(null)}
+          onSubmit={async (payload) => {
+            await submitAssistanceBankDetails(bankApp.id, payload);
+            showToast('Bank details submitted successfully. Disbursement will be processed soon.', 'success');
+            setBankApp(null);
+          }}
+        />
+      )}
     </div>
   );
 }

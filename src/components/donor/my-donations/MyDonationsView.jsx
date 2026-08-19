@@ -8,6 +8,7 @@ import DonationSummaryCards from './DonationSummaryCards';
 import DonationTabs from './DonationTabs';
 import DonationFilters from './DonationFilters';
 import DonationTable, { DonationPagination } from './DonationTable';
+import MyDonationItems from '../item-donations/MyDonationItems';
 
 function EmptyState({ tab, onDonate }) {
   if (tab === 'recurring') {
@@ -203,6 +204,8 @@ export default function MyDonationsView() {
           </button>
         </footer>
       )}
+
+      <MyDonationItems />
     </div>
   );
 }

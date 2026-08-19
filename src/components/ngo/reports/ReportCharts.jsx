@@ -22,7 +22,7 @@ const tooltipStyle = {
   fontSize: 12
 };
 
-export function DonationTrendChart({ data }) {
+export function DonationTrendChart({ data, strokeColor = '#1268E8' }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
@@ -34,9 +34,9 @@ export function DonationTrendChart({ data }) {
           type="monotone"
           dataKey="value"
           name="Donations"
-          stroke="#22C55E"
+          stroke={strokeColor}
           strokeWidth={2.5}
-          dot={{ r: 3, fill: '#16A34A', strokeWidth: 0 }}
+          dot={{ r: 3, fill: strokeColor, strokeWidth: 0 }}
           activeDot={{ r: 5 }}
         />
       </LineChart>

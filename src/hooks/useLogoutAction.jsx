@@ -17,8 +17,9 @@ export function useLogoutAction({ redirectTo = '/', skipConfirm = false } = {}) 
       showToast('You have been signed out safely.', 'success');
     } catch {
       showToast('Signed out locally.', 'info');
+    } finally {
+      navigate(redirectTo, { replace: true });
     }
-    navigate(redirectTo, { replace: true });
   }, [logout, navigate, redirectTo, showToast]);
 
   const requestLogout = useCallback(() => {

@@ -1,19 +1,29 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell, HeartHandshake, Shield, SlidersHorizontal, Database, AlertTriangle,
-  KeyRound, ShieldCheck, MonitorSmartphone, Download, FileSpreadsheet,
-  History, RotateCcw, CreditCard, Truck, Check
+  KeyRound, MonitorSmartphone, Download, FileSpreadsheet,
+  History, RotateCcw, CreditCard, Check, X, Loader2, LogOut
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
+import { useDonorSettings } from '../../hooks/useDonorSettings';
 import {
-  INITIAL_DONOR_SETTINGS,
+  changePassword,
+  deactivateAccount,
+  deleteAccount,
+  logoutAllSessions,
+  getMe,
+} from '../../api/iamClient';
+import { getMyDonations } from '../../api/coreClient';
+import {
   DONOR_NOTIFICATION_TOGGLES,
   DONOR_CATEGORIES,
   DONOR_LANGUAGE_OPTIONS,
   DONOR_TIMEZONE_OPTIONS,
-  DONOR_DATE_FORMAT_OPTIONS
+  DONOR_DATE_FORMAT_OPTIONS,
 } from '../../data/donorSettingsData';
+import { downloadJson, formatLastLogin } from '../../utils/donorSettings';
 
 function Toggle({ id, checked, onChange, title, description, disabled = false }) {
   return (
@@ -51,64 +61,230 @@ function SettingSelect({ id, label, value, onChange, options }) {
   );
 }
 
+function SettingsModal({ title, subtitle, onClose, children, footer }) {
+  return (
+    <div className="ds-modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="ds-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ds-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="ds-modal__head">
+          <div>
+            <h2 id="ds-modal-title">{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+          <button type="button" className="ds-modal__close" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </header>
+        <div className="ds-modal__body">{children}</div>
+        {footer && <footer className="ds-modal__foot">{footer}</footer>}
+      </div>
+    </div>
+  );
+}
+
+function PasswordField({ id, label, value, onChange, autoComplete }) {
+  return (
+    <label className="ds-field" htmlFor={id}>
+      <span>{label}</span>
+      <input
+        id={id}
+        type="password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+        placeholder="••••••••"
+      />
+    </label>
+  );
+}
+
 export default function DonorSettingsPage() {
-  const { currentUser, dispatch } = useApp();
+  const navigate = useNavigate();
+  const { dispatch, logout } = useApp();
   const { showToast } = useToast();
 
-  const initial = useMemo(
-    () => ({
-      ...INITIAL_DONOR_SETTINGS,
-      ...(currentUser?.settings || {})
-    }),
-    [currentUser]
+  const {
+    settings,
+    security,
+    loading,
+    saving,
+    error,
+    dirty,
+    patch,
+    resetChanges,
+    saveSettings,
+    refreshSecurity,
+  } = useDonorSettings({
+    onSaved: (merged) => {
+      dispatch({ type: 'UPDATE_USER', payload: { settings: merged } });
+      showToast('Settings saved successfully.', 'success');
+    },
+  });
+
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [deactivateModal, setDeactivateModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [activityModal, setActivityModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [deactivatePassword, setDeactivatePassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  const selectedCount = settings?.preferredCategories?.length || 0;
+
+  const lastLoginLabel = useMemo(
+    () => formatLastLogin(security?.last_login_at, settings?.timezone),
+    [security, settings?.timezone]
   );
 
-  const [settings, setSettings] = useState(initial);
-  const [baseline, setBaseline] = useState(() => JSON.stringify(initial));
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const dirty = JSON.stringify(settings) !== baseline;
-
-  const patch = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
-
   const toggleCategory = (category) => {
-    setSettings((prev) => {
-      const list = prev.preferredCategories || [];
-      const next = list.includes(category)
-        ? list.filter((c) => c !== category)
-        : [...list, category];
-      return { ...prev, preferredCategories: next };
-    });
+    if (!settings) return;
+    const list = settings.preferredCategories || [];
+    const next = list.includes(category)
+      ? list.filter((c) => c !== category)
+      : [...list, category];
+    patch('preferredCategories', next);
   };
 
-  const resetChanges = () => {
-    setSettings(JSON.parse(baseline));
-    showToast('Changes discarded', 'success');
+  const handleSave = async () => {
+    try {
+      await saveSettings();
+    } catch {
+      showToast('Could not save settings. Please try again.', 'error');
+    }
   };
 
-  const saveSettings = () => {
-    if (!dirty) return;
-    dispatch({
-      type: 'UPDATE_USER',
-      payload: { settings: { ...settings } }
-    });
-    setBaseline(JSON.stringify(settings));
-    showToast('Settings saved.', 'success');
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      showToast('New password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast('New passwords do not match.', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await changePassword({ current_password: currentPassword, new_password: newPassword });
+      setPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      showToast('Password updated successfully.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not change password.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const confirmDanger = (actionLabel) => {
-    const ok = window.confirm(
-      `${actionLabel}\n\nThis is a sensitive action. Are you sure you want to continue?`
+  const handleDeactivate = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await deactivateAccount(deactivatePassword);
+      setDeactivateModal(false);
+      showToast('Account deactivated. Signing you out…', 'success');
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      showToast(err.message || 'Could not deactivate account.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await deleteAccount({ password: deletePassword, confirmation: deleteConfirmation });
+      setDeleteModal(false);
+      showToast('Account deleted. Signing you out…', 'success');
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      showToast(err.message || 'Could not delete account.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    setActionLoading(true);
+    try {
+      await logoutAllSessions();
+      await refreshSecurity();
+      showToast('All other sessions have been signed out.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not sign out other sessions.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDownloadHistory = async () => {
+    setActionLoading(true);
+    try {
+      const data = await getMyDonations({ period: 'all', page: 1, pageSize: 100 });
+      downloadJson('giveaway-donation-history.json', data);
+      showToast('Donation history downloaded.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not download donation history.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleExportAccount = async () => {
+    setActionLoading(true);
+    try {
+      const [profile, donations] = await Promise.all([
+        getMe(),
+        getMyDonations({ period: 'all', page: 1, pageSize: 50 }).catch(() => null),
+      ]);
+      downloadJson('giveaway-account-export.json', {
+        exported_at: new Date().toISOString(),
+        profile,
+        settings,
+        donations_summary: donations?.summary || donations,
+      });
+      showToast('Account data exported.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not export account data.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading || !settings) {
+    return (
+      <div className="ds-page donor-page donor-module page-route">
+        <div className="ds-loading" role="status">
+          <Loader2 size={28} className="ds-spin" aria-hidden="true" />
+          <p>Loading your settings…</p>
+        </div>
+      </div>
     );
-    if (ok) showToast(`${actionLabel} request submitted for review`, 'success');
-  };
-
-  const selectedCount = settings.preferredCategories?.length || 0;
+  }
 
   return (
     <div className="ds-page donor-page donor-module page-route">
       <header className="ds-hero">
         <h1>Settings</h1>
-        <p>Manage your account preferences, notifications, privacy, and donation settings.</p>
+        <p>Manage notifications, donation preferences, security, and account options.</p>
+        {error && <p className="ds-error-banner" role="alert">{error}</p>}
       </header>
 
       <div className="ds-stack">
@@ -117,7 +293,7 @@ export default function DonorSettingsPage() {
             <Bell size={18} aria-hidden="true" />
             <div>
               <h2>Notification Preferences</h2>
-              <p>Choose how you want to hear about donations and account activity.</p>
+              <p>Control email, SMS, and in-app update preferences.</p>
             </div>
           </header>
           <div className="ds-list">
@@ -139,7 +315,7 @@ export default function DonorSettingsPage() {
             <HeartHandshake size={18} aria-hidden="true" />
             <div>
               <h2>Donation Preferences</h2>
-              <p>Set defaults for how and what you prefer to donate.</p>
+              <p>Defaults used when you donate items or funds.</p>
             </div>
           </header>
 
@@ -190,30 +366,16 @@ export default function DonorSettingsPage() {
           <div className="ds-pref-actions">
             <div className="ds-pref-row">
               <div>
-                <strong>Default Payment Preference</strong>
-                <p>Manage your preferred payment method for future contributions.</p>
+                <strong>Payment Methods</strong>
+                <p>Manage saved payment options for donations.</p>
               </div>
               <button
                 type="button"
                 className="ds-btn ds-btn--secondary"
-                onClick={() => showToast('Payment preferences opened', 'success')}
+                onClick={() => navigate('/dashboard/donor-payment-methods')}
               >
                 <CreditCard size={15} />
                 Manage
-              </button>
-            </div>
-            <div className="ds-pref-row">
-              <div>
-                <strong>Default Pickup Preference</strong>
-                <p>Coming soon — set preferred pickup windows for item donations.</p>
-              </div>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                onClick={() => showToast('Pickup preferences coming soon', 'success')}
-              >
-                <Truck size={15} />
-                Coming soon
               </button>
             </div>
           </div>
@@ -224,7 +386,7 @@ export default function DonorSettingsPage() {
             <Shield size={18} aria-hidden="true" />
             <div>
               <h2>Privacy & Security</h2>
-              <p>Protect your account and review recent access activity.</p>
+              <p>Password, sessions, and recent sign-in activity.</p>
             </div>
           </header>
 
@@ -237,48 +399,40 @@ export default function DonorSettingsPage() {
               <button
                 type="button"
                 className="ds-btn ds-btn--secondary"
-                onClick={() => showToast('Password change flow opened', 'success')}
+                onClick={() => setPasswordModal(true)}
               >
                 <KeyRound size={15} />
                 Change Password
               </button>
             </div>
 
-            <Toggle
-              id="ds-2fa"
-              title="Two-Factor Authentication"
-              description="Add an extra verification step when signing in. Future-ready."
-              checked={!!settings.twoFactorEnabled}
-              onChange={(value) => {
-                patch('twoFactorEnabled', value);
-                if (value) showToast('2FA setup coming soon', 'success');
-              }}
-            />
-
             <div className="ds-security__row">
               <div>
                 <strong>Active Sessions</strong>
-                <p>Review devices currently signed in to your donor account.</p>
+                <p>Devices currently signed in to your donor account.</p>
               </div>
               <div className="ds-security__actions">
-                <span className="ds-badge ds-badge--info">1 active</span>
+                <span className="ds-badge ds-badge--info">
+                  {security?.active_sessions ?? 0} active
+                </span>
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost"
-                  onClick={() => showToast('Active sessions reviewed', 'success')}
+                  disabled={actionLoading}
+                  onClick={handleLogoutAll}
                 >
-                  <MonitorSmartphone size={15} />
-                  View
+                  <LogOut size={15} />
+                  Sign out others
                 </button>
               </div>
             </div>
 
             <div className="ds-security__row">
               <div>
-                <strong>Last Login Information</strong>
+                <strong>Last Login</strong>
                 <p>Most recent successful sign-in to this account.</p>
               </div>
-              <span className="ds-meta">Today · 09:18 AM IST</span>
+              <span className="ds-meta">{lastLoginLabel}</span>
             </div>
           </div>
         </section>
@@ -333,13 +487,9 @@ export default function DonorSettingsPage() {
                 role="radio"
                 aria-checked={settings.theme === 'dark'}
                 className={`ds-theme-card${settings.theme === 'dark' ? ' is-selected' : ''}`}
-                onClick={() => {
-                  patch('theme', 'dark');
-                  showToast('Dark Mode coming soon', 'success');
-                }}
+                onClick={() => patch('theme', 'dark')}
               >
                 Dark Mode
-                <em>Coming soon</em>
               </button>
             </div>
           </div>
@@ -357,7 +507,8 @@ export default function DonorSettingsPage() {
             <button
               type="button"
               className="ds-btn ds-btn--secondary"
-              onClick={() => showToast('Downloading donation history…', 'success')}
+              disabled={actionLoading}
+              onClick={handleDownloadHistory}
             >
               <Download size={15} />
               Download Donation History
@@ -365,7 +516,8 @@ export default function DonorSettingsPage() {
             <button
               type="button"
               className="ds-btn ds-btn--secondary"
-              onClick={() => showToast('Exporting account data…', 'success')}
+              disabled={actionLoading}
+              onClick={handleExportAccount}
             >
               <FileSpreadsheet size={15} />
               Export Account Data
@@ -373,7 +525,7 @@ export default function DonorSettingsPage() {
             <button
               type="button"
               className="ds-btn ds-btn--secondary"
-              onClick={() => showToast('Opening activity log…', 'success')}
+              onClick={() => setActivityModal(true)}
             >
               <History size={15} />
               View Activity Log
@@ -386,25 +538,25 @@ export default function DonorSettingsPage() {
             <AlertTriangle size={18} aria-hidden="true" />
             <div>
               <h2>Danger Zone</h2>
-              <p>These actions are irreversible and may remove access to donation history.</p>
+              <p>Deactivate or permanently remove your donor account.</p>
             </div>
           </header>
           <p className="ds-danger-note">
-            Deactivating or deleting your account will pause donation participation. Please confirm
-            carefully before continuing.
+            Deactivating pauses your access. Deleting anonymizes your profile and signs you out
+            permanently. Both actions require your password.
           </p>
           <div className="ds-danger-actions">
             <button
               type="button"
               className="ds-btn ds-btn--warning"
-              onClick={() => confirmDanger('Deactivate Account')}
+              onClick={() => setDeactivateModal(true)}
             >
               Deactivate Account
             </button>
             <button
               type="button"
               className="ds-btn ds-btn--danger"
-              onClick={() => confirmDanger('Delete Account')}
+              onClick={() => setDeleteModal(true)}
             >
               Delete Account
             </button>
@@ -415,7 +567,7 @@ export default function DonorSettingsPage() {
       <div className={`ds-actions${dirty ? ' is-dirty' : ''}`}>
         {dirty && (
           <span className="ds-unsaved" role="status">
-            Unsaved Changes
+            Unsaved changes
           </span>
         )}
         <div className="ds-actions__btns">
@@ -423,7 +575,7 @@ export default function DonorSettingsPage() {
             type="button"
             className="ds-btn ds-btn--secondary"
             onClick={resetChanges}
-            disabled={!dirty}
+            disabled={!dirty || saving}
           >
             <RotateCcw size={15} />
             Reset Changes
@@ -431,13 +583,173 @@ export default function DonorSettingsPage() {
           <button
             type="button"
             className="ds-btn ds-btn--primary"
-            onClick={saveSettings}
-            disabled={!dirty}
+            onClick={handleSave}
+            disabled={!dirty || saving}
           >
-            Save Settings
+            {saving ? <Loader2 size={15} className="ds-spin" /> : null}
+            {saving ? 'Saving…' : 'Save Settings'}
           </button>
         </div>
       </div>
+
+      {passwordModal && (
+        <SettingsModal
+          title="Change password"
+          subtitle="Enter your current password and choose a new one."
+          onClose={() => setPasswordModal(false)}
+          footer={(
+            <>
+              <button type="button" className="ds-btn ds-btn--secondary" onClick={() => setPasswordModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="ds-change-password-form"
+                className="ds-btn ds-btn--primary"
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Updating…' : 'Update Password'}
+              </button>
+            </>
+          )}
+        >
+          <form id="ds-change-password-form" onSubmit={handleChangePassword} className="ds-form">
+            <PasswordField
+              id="ds-current-password"
+              label="Current password"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              autoComplete="current-password"
+            />
+            <PasswordField
+              id="ds-new-password"
+              label="New password"
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+            />
+            <PasswordField
+              id="ds-confirm-password"
+              label="Confirm new password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+            />
+          </form>
+        </SettingsModal>
+      )}
+
+      {deactivateModal && (
+        <SettingsModal
+          title="Deactivate account"
+          subtitle="Your account will be paused and you will be signed out."
+          onClose={() => setDeactivateModal(false)}
+          footer={(
+            <>
+              <button type="button" className="ds-btn ds-btn--secondary" onClick={() => setDeactivateModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="ds-deactivate-form"
+                className="ds-btn ds-btn--warning"
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Deactivating…' : 'Deactivate'}
+              </button>
+            </>
+          )}
+        >
+          <form id="ds-deactivate-form" onSubmit={handleDeactivate} className="ds-form">
+            <p className="ds-modal-note">Enter your password to confirm deactivation.</p>
+            <PasswordField
+              id="ds-deactivate-password"
+              label="Password"
+              value={deactivatePassword}
+              onChange={setDeactivatePassword}
+              autoComplete="current-password"
+            />
+          </form>
+        </SettingsModal>
+      )}
+
+      {deleteModal && (
+        <SettingsModal
+          title="Delete account"
+          subtitle="This permanently removes access to your donor account."
+          onClose={() => setDeleteModal(false)}
+          footer={(
+            <>
+              <button type="button" className="ds-btn ds-btn--secondary" onClick={() => setDeleteModal(false)}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="ds-delete-form"
+                className="ds-btn ds-btn--danger"
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Deleting…' : 'Delete Account'}
+              </button>
+            </>
+          )}
+        >
+          <form id="ds-delete-form" onSubmit={handleDelete} className="ds-form">
+            <p className="ds-modal-note">
+              Type <strong>DELETE</strong> and enter your password to confirm.
+            </p>
+            <label className="ds-field" htmlFor="ds-delete-confirm">
+              <span>Confirmation</span>
+              <input
+                id="ds-delete-confirm"
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </label>
+            <PasswordField
+              id="ds-delete-password"
+              label="Password"
+              value={deletePassword}
+              onChange={setDeletePassword}
+              autoComplete="current-password"
+            />
+          </form>
+        </SettingsModal>
+      )}
+
+      {activityModal && (
+        <SettingsModal
+          title="Activity log"
+          subtitle="Recent sign-in attempts for your account."
+          onClose={() => setActivityModal(false)}
+          footer={(
+            <button type="button" className="ds-btn ds-btn--primary" onClick={() => setActivityModal(false)}>
+              Close
+            </button>
+          )}
+        >
+          <div className="ds-activity-list">
+            {(security?.recent_logins || []).length === 0 ? (
+              <p className="ds-modal-note">No login activity recorded yet.</p>
+            ) : (
+              security.recent_logins.map((row, index) => (
+                <div key={`${row.login_time}-${index}`} className="ds-activity-row">
+                  <div>
+                    <strong>{row.status === 'SUCCESS' ? 'Successful sign-in' : 'Failed attempt'}</strong>
+                    <p>{formatLastLogin(row.login_time, settings.timezone)}</p>
+                  </div>
+                  <span className={`ds-activity-badge${row.status === 'SUCCESS' ? ' is-success' : ' is-failed'}`}>
+                    {row.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </SettingsModal>
+      )}
     </div>
   );
 }

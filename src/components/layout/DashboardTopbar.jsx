@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Search, Bell, ChevronDown, User, Settings, LogOut, BadgeCheck } from 'lucide-react';
 import { getInitials } from '../../utils/receiverHelpers';
 import { isNgoVerified } from '../../context/AppContext';
+import { searchCausesAndNgos } from '../../api/coreClient';
+import AjaBrandMark from '../branding/AjaBrandMark';
 
 function HeaderLogo() {
   return (
@@ -20,14 +22,13 @@ function getRoleRoutes(role) {
     donor: { profile: 'donor-profile', settings: 'donor-settings', notifications: 'donor-notifications' },
     receiver: { profile: 'receiver-profile', settings: 'receiver-settings', notifications: 'receiver-notifications' },
     ngo: { profile: 'ngo-profile', settings: 'ngo-settings', notifications: 'ngo-notifications' },
-    'super-admin': { profile: 'admin-dashboard', settings: 'admin-settings', notifications: 'admin-notifications' }
   };
   return map[role] || {};
 }
 
 function isUserVerified(user, role) {
   if (role === 'ngo') return isNgoVerified(user);
-  if (role === 'donor') return user?.verified === true;
+  if (role === 'donor' || role === 'receiver') return user?.verified === true;
   return false;
 }
 
@@ -48,19 +49,31 @@ export default function DashboardTopbar({
   onToggleMenu,
   onLogout,
   logoutLoading = false,
+  withSidebar = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const profileRef = useRef(null);
+  const searchRef = useRef(null);
+  const searchTimer = useRef(null);
 
   const routes = getRoleRoutes(role);
   const pageTitle = getPageTitle(navItems, location.pathname);
   const showVerified = isUserVerified(user, role);
+  const isDonor = role === 'donor';
+  const isReceiver = role === 'receiver';
+  const isNgo = role === 'ngo';
+  const compactHeader = withSidebar && (isDonor || isReceiver || isNgo);
+  const roleLabel = isDonor ? 'Donor' : isReceiver ? 'Receiver' : isNgo ? 'NGO Partner' : null;
 
   useEffect(() => {
     setProfileOpen(false);
+    setSearchResults(null);
+    setSearchQuery('');
   }, [location.pathname]);
 
   useEffect(() => {
@@ -83,17 +96,63 @@ export default function DashboardTopbar({
     };
   }, [profileOpen]);
 
+  useEffect(() => {
+    const onPointerDown = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchResults(null);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
+
+  useEffect(() => () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+  }, []);
+
   const goTo = (path) => {
     navigate(path);
     setProfileOpen(false);
   };
 
+  const runSearch = async (value) => {
+    const q = String(value || '').trim();
+    if (!isDonor || q.length < 2) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const data = await searchCausesAndNgos(q);
+      setSearchResults(data);
+    } catch {
+      setSearchResults({ programs: [], ngos: [], query: q, error: true });
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => runSearch(value), 280);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
+    runSearch(searchQuery);
+  };
+
+  const openProgram = (program) => {
+    setSearchResults(null);
+    setSearchQuery('');
+    navigate(`/dashboard/donor-donate-money?program_id=${program.program_id}`);
   };
 
   return (
-    <header className="dash-header">
+    <header className={`dash-header${compactHeader ? ' dash-header--compact' : ''}`}>
       <div className="dash-header__inner">
         <div className="dash-header__left">
           <button
@@ -106,32 +165,71 @@ export default function DashboardTopbar({
             {menuOpen ? <X size={22} strokeWidth={2.25} /> : <Menu size={22} strokeWidth={2.25} />}
           </button>
 
-          <div
-            className="dash-header__brand"
-            onClick={() => navigate('/')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/'); }}
-            role="button"
-            tabIndex={0}
-          >
-            <HeaderLogo />
-            <div className="dash-header__brand-text">
-              <span className="dash-header__title">Give Away</span>
-              <span className="dash-header__subtitle">Aja Abayahastham</span>
+          {compactHeader ? (
+            <div className={`dash-header__compact-brand${isNgo ? ' dash-header__compact-brand--ngo' : ''}`}>
+              {isNgo ? (
+                <AjaBrandMark size="sm" className="dash-header__compact-aja-mark" />
+              ) : (
+                <img
+                  src="/assets/donor/Aja_Abayahastham_Brand_Logo.png"
+                  alt=""
+                  className="dash-header__compact-logo"
+                  width={32}
+                  height={32}
+                  decoding="async"
+                />
+              )}
+              <h1 className="dash-header__page-title dash-header__page-title--visible">{pageTitle}</h1>
             </div>
-          </div>
+          ) : (
+            <div
+              className="dash-header__brand"
+              onClick={() => navigate('/')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/'); }}
+              role="button"
+              tabIndex={0}
+            >
+              <HeaderLogo />
+              <div className="dash-header__brand-text">
+                <span className="dash-header__title">Give Away</span>
+                <span className="dash-header__subtitle">Serve · Support · Uplift</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="dash-header__center">
-          <form className="dash-header__search" onSubmit={handleSearch}>
+          <form className="dash-header__search" onSubmit={handleSearch} ref={searchRef}>
             <Search size={18} className="dash-header__search-icon" aria-hidden="true" />
             <input
               type="search"
               className="dash-header__search-input"
-              placeholder="Search donations, requests..."
+              placeholder={isDonor ? 'Search causes and programs…' : 'Search donations, requests...'}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search donations and requests"
+              onChange={handleSearchChange}
+              aria-label={isDonor ? 'Search causes and programs' : 'Search donations and requests'}
+              autoComplete="off"
             />
+            {isDonor && searchResults && (
+              <div className="dash-search-results" role="listbox" aria-label="Search results">
+                {searchLoading && (
+                  <p className="px-3 py-3 text-sm text-[#49638F]">Searching…</p>
+                )}
+                {!searchLoading && searchResults.error && (
+                  <p className="px-3 py-3 text-sm text-rose-600">Search failed. Try again.</p>
+                )}
+                {!searchLoading && !searchResults.error && !(searchResults.programs?.length) && (
+                  <p className="px-3 py-3 text-sm text-[#49638F]">No matches for “{searchResults.query}”.</p>
+                )}
+                {(searchResults.programs || []).map((p) => (
+                  <button key={`p-${p.program_id}`} type="button" role="option" onClick={() => openProgram(p)}>
+                    <span className="dash-search-results__type">Cause</span>
+                    <span className="dash-search-results__title">{p.program_name}</span>
+                    <span className="dash-search-results__meta">{p.category}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </form>
           <p className="dash-header__page-title" aria-hidden="true">{pageTitle}</p>
         </div>
@@ -159,11 +257,22 @@ export default function DashboardTopbar({
               aria-expanded={profileOpen}
               aria-haspopup="menu"
             >
-              <span className={`dash-header__avatar dash-header__avatar--${roleClass}`}>
-                {getInitials(user.name)}
-              </span>
+              {isDonor ? (
+                <img
+                  src="/assets/donor/Donor_Profile_Avatar.png"
+                  alt=""
+                  className="dash-header__avatar dash-header__avatar--img"
+                />
+              ) : (
+                <span className={`dash-header__avatar dash-header__avatar--${roleClass}`}>
+                  {getInitials(user.name)}
+                </span>
+              )}
               <span className="dash-header__profile-meta">
                 <span className="dash-header__profile-name">{user.name}</span>
+                {roleLabel && (
+                  <span className="dash-header__role-label">{roleLabel}</span>
+                )}
                 {showVerified && (
                   <span className="dash-header__verified">
                     <BadgeCheck size={12} strokeWidth={2.5} />

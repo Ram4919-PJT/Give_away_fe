@@ -126,15 +126,15 @@
   min-height: unset !important;
   padding: 0 !important;
   border-radius: 999px !important;
-  background: #22C55E !important;
+  background: #1268E8 !important;
   border: 2px solid #FFFFFF !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.35) !important;
+  box-shadow: 0 4px 10px rgba(18, 104, 232, 0.35) !important;
   cursor: pointer;
 }
 
 .op-avatar__edit:hover {
-  background: #16A34A !important;
+  background: #0F54BE !important;
   transform: none !important;
 }
 
@@ -514,13 +514,13 @@ button.op-chip.is-selected {
 
 .op-btn--primary {
   color: #FFFFFF !important;
-  background: #22C55E !important;
-  border: 1px solid #22C55E !important;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2) !important;
+  background: #1268E8 !important;
+  border: 1px solid #1268E8 !important;
+  box-shadow: 0 4px 12px rgba(18, 104, 232, 0.2) !important;
 }
 
 .op-btn--primary:hover:not(:disabled) {
-  background: #16A34A !important;
+  background: #0F54BE !important;
   transform: translateY(-1px);
 }
 

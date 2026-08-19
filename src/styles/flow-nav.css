@@ -1,0 +1,218 @@
+/* ─── Page-level back link ─── */
+.page-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: none;
+  color: #1268e8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.page-back-link:hover {
+  color: #0d52ba;
+  text-decoration: none;
+}
+
+.page-back-link:hover svg {
+  transform: translateX(-2px);
+}
+
+.page-back-link svg {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.page-back-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Legacy class aliases */
+.ngo-back-btn,
+.donor-back-btn,
+.receiver-back-btn,
+.idw-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: none;
+  color: #1268e8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.ngo-back-btn:hover,
+.donor-back-btn:hover,
+.receiver-back-btn:hover,
+.idw-back:hover {
+  color: #0d52ba;
+  text-decoration: underline;
+}
+
+/* ─── Step panel transitions ─── */
+@keyframes flow-step-forward {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes flow-step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.flow-step-panel {
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.flow-step-panel--forward {
+  animation-name: flow-step-forward;
+}
+
+.flow-step-panel--back {
+  animation-name: flow-step-back;
+}
+
+/* Align donor item wizard panels with shared motion */
+.idw-wizard__panel--slide.idw-wizard__panel--forward {
+  animation-name: flow-step-forward;
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.idw-wizard__panel--slide.idw-wizard__panel--back {
+  animation-name: flow-step-back;
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rd-step-panel.flow-step-panel {
+  width: 100%;
+}
+
+/* ─── Wizard step footer ─── */
+.flow-step-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.flow-step-footer--split {
+  justify-content: space-between;
+}
+
+.flow-step-footer__left,
+.flow-step-footer__right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.flow-step-footer__count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.flow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+
+.flow-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.flow-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.flow-btn--ghost {
+  background: #fff;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.flow-btn--ghost:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.flow-btn--primary {
+  background: linear-gradient(135deg, #1268e8 0%, #0d52ba 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(18, 104, 232, 0.22);
+}
+
+.flow-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.03);
+}
+
+.flow-spin {
+  animation: flow-spin 0.8s linear infinite;
+}
+
+@keyframes flow-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .flow-step-footer--split {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .flow-step-footer__left,
+  .flow-step-footer__right {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .flow-step-footer__right .flow-btn,
+  .flow-step-footer__left .flow-btn {
+    flex: 1;
+  }
+}

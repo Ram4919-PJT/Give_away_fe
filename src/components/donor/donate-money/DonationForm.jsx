@@ -1,16 +1,25 @@
-import { DONOR_MONEY_PRESETS, DONOR_PURPOSES } from '../../../data/donorConstants';
 import PaymentSelector from './PaymentSelector';
 import DonationSummary from './DonationSummary';
+
+const FALLBACK_PRESETS = [500, 1000, 2500, 5000];
 
 export default function DonationForm({
   checkout,
   amount,
   purpose,
+  programId,
   payment,
+  programs = [],
   onAmountChange,
   onPurposeChange,
+  onProgramChange,
   onPaymentSelect
 }) {
+  const activePrograms = (programs || []).filter(
+    (p) => String(p.status || '').toUpperCase() === 'ACTIVE'
+  );
+  const presets = FALLBACK_PRESETS;
+
   return (
     <div className="money-donation-form">
       {!checkout && (
@@ -23,7 +32,7 @@ export default function DonationForm({
       <div className="money-field">
         <label className="money-field-label">Select Amount</label>
         <div className="money-amt-grid">
-          {DONOR_MONEY_PRESETS.map((preset) => {
+          {presets.map((preset) => {
             const selected = Number(amount) === preset;
             return (
               <button
@@ -56,17 +65,28 @@ export default function DonationForm({
       </div>
 
       <div className="money-field">
-        <label className="money-field-label" htmlFor="donate-purpose">Purpose</label>
-        <select
-          id="donate-purpose"
-          className="money-select"
-          value={purpose}
-          onChange={(e) => onPurposeChange(e.target.value)}
-        >
-          {DONOR_PURPOSES.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
+        <label className="money-field-label" htmlFor="donate-purpose">Program / Cause</label>
+        {activePrograms.length === 0 ? (
+          <p className="text-sm text-[#49638F] m-0">No active programs are available yet. Your donation will support general platform relief.</p>
+        ) : (
+          <select
+            id="donate-purpose"
+            className="money-select"
+            value={programId || activePrograms[0]?.program_id || ''}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              const prog = activePrograms.find((p) => Number(p.program_id || p.id) === id);
+              onProgramChange?.(id, prog?.title || prog?.program_name || purpose);
+              onPurposeChange(prog?.title || prog?.program_name || 'General Donation');
+            }}
+          >
+            {activePrograms.map((p) => (
+              <option key={p.program_id || p.id} value={p.program_id || p.id}>
+                {p.title || p.program_name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <PaymentSelector

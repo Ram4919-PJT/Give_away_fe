@@ -1,13 +1,16 @@
 export function getReceiverApps(apps, user) {
   if (!user) return [];
-  const emailKey = (user.email || '').toLowerCase();
+  const emailKey = String(user.email || '').toLowerCase();
   const userId = user.id || user.user_id || user.userId;
-  const list = apps || [];
-  const matched = list.filter(
-    (a) =>
-      (userId && a.receiver_user_id === userId) ||
-      (a.receiverEmail || '').toLowerCase() === emailKey
-  );
+  const list = Array.isArray(apps) ? apps : [];
+  const matched = list.filter((a) => {
+    const receiverEmail = String(a.receiverEmail ?? '').toLowerCase();
+    const receiverUserId = a.receiver_user_id ?? a.receiver_id;
+    return (
+      (userId != null && receiverUserId === userId)
+      || (emailKey && receiverEmail === emailKey)
+    );
+  });
   if (!matched.length && list.length && user.role === 'receiver') return list;
   return matched;
 }
@@ -65,12 +68,19 @@ export function getCardTimelineIndex(status) {
     'Documents Verified': 1,
     'Under Review': 1,
     Approved: 2,
+    'Add Bank Details': 3,
+    'Processing Payout': 4,
     Assigned: 2,
-    'Funds Released': 3,
-    Completed: 4,
+    'Funds Released': 5,
+    Completed: 5,
     Rejected: -1,
   };
   return map[status] ?? 0;
+}
+
+export function applicationNeedsBankDetails(app) {
+  return app?.needsBankDetails === true
+    || (app?.rawStatus === 'APPROVED' && app?.payoutStatus === 'AWAITING_BANK_DETAILS');
 }
 
 export function applicationStatusClass(status) {
@@ -80,6 +90,8 @@ export function applicationStatusClass(status) {
     'Documents Verified': 'receiver-app-status--submitted',
     'Under Review': 'receiver-app-status--review',
     Approved: 'receiver-app-status--approved',
+    'Add Bank Details': 'receiver-app-status--bank',
+    'Processing Payout': 'receiver-app-status--payout',
     Assigned: 'receiver-app-status--approved',
     'Funds Released': 'receiver-app-status--funds',
     Completed: 'receiver-app-status--completed',

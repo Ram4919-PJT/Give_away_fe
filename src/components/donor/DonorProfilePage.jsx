@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
+import { PageBackLink } from '../ui/FlowNav';
 import {
   getDonorDonations,
   getDonorStats,
@@ -197,6 +198,7 @@ export default function DonorProfilePage() {
 
   return (
     <div className="dp-page donor-page donor-module page-route">
+      <PageBackLink to="/dashboard/donor-dashboard" label="Back to Dashboard" />
       <section className="dp-hero">
         <div className="dp-hero__left">
           <div className="dp-avatar" aria-hidden="true">

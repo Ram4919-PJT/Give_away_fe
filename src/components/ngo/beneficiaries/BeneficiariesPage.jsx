@@ -87,7 +87,9 @@ function BeneficiaryModal({ title, beneficiary, onClose, mode }) {
               <div>
                 <strong>Case opened</strong>
                 <p>{beneficiary.type} assistance initiated for {beneficiary.name}.</p>
-                <time>{formatDate(beneficiary.lastUpdated) || 'Recently'}</time>
+                <time dateTime={beneficiary.lastUpdated}>
+                  {formatDate(beneficiary.lastUpdated) ?? '—'}
+                </time>
               </div>
             </div>
             {beneficiary.resources && (

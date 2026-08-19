@@ -1,14 +1,3 @@
-export const NGO_PROGRAMS = [
-  { id: 'p1', name: 'Medical Support', icon: '🏥', desc: 'Hospital equipment, medicines, and emergency medical aid for underserved communities.', eligibility: 'Registered hospitals, clinics, and medical NGOs', categories: ['Medical', 'Health'] },
-  { id: 'p2', name: 'Educational Support', icon: '📚', desc: 'School supplies, scholarships, and infrastructure for children in need.', eligibility: 'Schools, education NGOs, and learning centers', categories: ['Education', 'Children'] },
-  { id: 'p3', name: 'Food Assistance', icon: '🍲', desc: 'Community kitchens, ration kits, and nutrition programs.', eligibility: 'Food banks, community kitchens, relief NGOs', categories: ['Food', 'Nutrition'] },
-  { id: 'p4', name: 'Disaster Relief', icon: '🌊', desc: 'Emergency response for floods, earthquakes, and natural disasters.', eligibility: 'Disaster response NGOs with field presence', categories: ['Disaster', 'Emergency'] },
-  { id: 'p5', name: 'Livelihood Support', icon: '💼', desc: 'Skill training, micro-enterprise, and employment assistance.', eligibility: 'Livelihood and vocational training NGOs', categories: ['Livelihood', 'Skills'] },
-  { id: 'p6', name: 'Women Empowerment', icon: '👩', desc: "Programs supporting women's health, safety, and economic independence.", eligibility: 'Women-focused NGOs and self-help groups', categories: ['Women', 'Empowerment'] },
-  { id: 'p7', name: 'Child Welfare', icon: '👧', desc: 'Orphan care, child protection, and developmental support programs.', eligibility: 'Child welfare organizations with valid registration', categories: ['Children', 'Welfare'] },
-  { id: 'p8', name: 'Senior Citizen Welfare', icon: '👴', desc: 'Elder care, pension support, and healthcare for senior citizens.', eligibility: 'Elder care NGOs and senior citizen associations', categories: ['Elderly', 'Care'] }
-];
-
 export const NGO_VERIFY_REQUIRED = [
   'NGO Registration Certificate', 'PAN Card', 'Bank Account Details',
   'Cancelled Cheque / Passbook', 'Authorized Representative Government ID',
@@ -20,57 +9,7 @@ export const NGO_VERIFY_OPTIONAL = [
   'FCRA Certificate (if applicable)', 'NGO Logo'
 ];
 
-export const ASSISTANCE_TYPES = {
-  'Medical Assistance': {
-    desc: 'Hospital bills, medicines, and treatment costs',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Doctor Prescription', 'Diagnosis Report', 'Hospital Estimate', 'Hospital Bills', 'Admission Letter']
-    }
-  },
-  'Educational Assistance': {
-    desc: 'School fees, books, and educational expenses',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Student ID Card', 'Bonafide Certificate', 'Admission Letter', 'Fee Structure', 'Fee Receipt']
-    }
-  },
-  'Emergency Relief': {
-    desc: 'Sudden crises — rent, food, disaster recovery',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Government Certificate', 'Local Authority Letter', 'Supporting Photos (Optional)']
-    }
-  },
-  'Women & Child Welfare': {
-    desc: 'Support for women and children in need',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Supporting Certificate', 'Medical Report (if applicable)']
-    }
-  },
-  'Senior Citizen Assistance': {
-    desc: 'Elderly care, medical, and livelihood support',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Age Proof', 'Medical Report (if required)']
-    }
-  },
-  'Disability Support': {
-    desc: 'Aid for persons with disabilities',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Disability Certificate', 'Medical Report']
-    }
-  },
-  'Other Financial Assistance': {
-    desc: 'Other verified financial hardship needs',
-    docs: {
-      common: ['Aadhaar Card', 'Passport Size Photo', 'Income Certificate'],
-      specific: ['Supporting Certificate', 'Supporting Documents']
-    }
-  }
-};
+export const ASSISTANCE_TYPES = {};
 
 export const ROLE_AUTH_CONFIG = {
   donor: {
@@ -106,38 +45,79 @@ export const ROLE_AUTH_CONFIG = {
 };
 
 export const DONOR_NAV = [
-  { id: 'donor-dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-  { id: 'donor-donate-item', label: 'Donate Item', icon: 'package' },
-  { id: 'donor-donate-money', label: 'Donate Money', icon: 'heart-handshake' },
-  { id: 'donor-my-donations', label: 'My Donations', icon: 'gift' },
-  { id: 'donor-my-impact', label: 'My Impact', icon: 'sparkles', locked: true },
-  { id: 'donor-notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'donor-profile', label: 'Profile', icon: 'user' },
-  { id: 'donor-settings', label: 'Settings', icon: 'settings' }
+  { id: 'donor-dashboard', label: 'Dashboard', icon: 'layout-dashboard', group: 'main' },
+  { id: 'donor-my-donations', label: 'My Donations', icon: 'gift', group: 'main' },
+  { id: 'donor-item-requests', label: 'Donation Requests', icon: 'inbox', group: 'main' },
+  { id: 'donor-donate-money', label: 'Donate Money', icon: 'indian-rupee', group: 'give' },
+  { id: 'donor-add-item', label: 'Donate Items', icon: 'package', group: 'give', locked: true },
+  { id: 'donor-my-pledges', label: 'My Pledges', icon: 'handshake', group: 'giving' },
+  { id: 'donor-recurring', label: 'My Recurring Gifts', icon: 'refresh-cw', group: 'giving' },
+  { id: 'donor-my-impact', label: 'Impact & Reports', icon: 'bar-chart-3', group: 'giving' },
+  { id: 'donor-certificates', label: 'Certificates', icon: 'award', group: 'giving' },
+  { id: 'donor-favorites', label: 'Favorites', icon: 'heart', group: 'giving' },
+  { id: 'donor-verify', label: 'Verification', icon: 'shield-check', group: 'account' },
+  { id: 'donor-profile', label: 'Profile', icon: 'user', group: 'account' },
+  { id: 'donor-settings', label: 'Settings', icon: 'settings', group: 'account' },
+  { id: 'donor-payment-methods', label: 'Payment Methods', icon: 'credit-card', group: 'account' },
+  { id: 'donor-notifications', label: 'Notifications', icon: 'bell', group: 'account' },
+  { id: 'donor-help', label: 'Help & Support', icon: 'help-circle', group: 'account' },
 ];
+
+export const DONOR_NAV_GROUP_LABELS = {
+  main: 'Main',
+  give: 'Give',
+  giving: 'Giving',
+  account: 'Account',
+};
+
+export const RECEIVER_NAV_GROUP_LABELS = {
+  main: 'Main',
+  community: 'Community',
+  management: 'Management',
+  account: 'Account',
+};
 
 export const RECEIVER_NAV = [
-  { id: 'receiver-dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-  { id: 'receiver-apply', label: 'Apply for Financial Assistance', icon: 'file-heart', locked: true },
-  { id: 'receiver-applications', label: 'My Applications', icon: 'clipboard-list', locked: true },
-  { id: 'receiver-notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'receiver-profile', label: 'Profile', icon: 'user' },
-  { id: 'receiver-settings', label: 'Settings', icon: 'settings' }
+  { id: 'receiver-dashboard', label: 'Dashboard', icon: 'layout-dashboard', group: 'main' },
+  { id: 'receiver-requests', label: 'My Requests', icon: 'clipboard-list', group: 'main', locked: true },
+  { id: 'receiver-apply', label: 'Apply for Assistance', icon: 'file-heart', group: 'main', locked: true },
+  { id: 'receiver-notifications', label: 'Notifications', icon: 'bell', group: 'community' },
+  { id: 'receiver-verify', label: 'Verification (KYC)', icon: 'shield-check', group: 'management', locked: false },
+  { id: 'receiver-profile', label: 'Profile', icon: 'user', group: 'management' },
+  { id: 'receiver-settings', label: 'Settings', icon: 'settings', group: 'account' },
 ];
 
+export const NGO_NAV_GROUP_LABELS = {
+  main: 'Main',
+  donations: 'Donations',
+  support: 'Support',
+  management: 'Management',
+  account: 'Account',
+};
+
 export const NGO_NAV = [
-  { id: 'ngo-dashboard', label: 'Dashboard', icon: 'layout-dashboard', locked: false },
-  { id: 'ngo-verify', label: 'Complete Verification', icon: 'shield-check', locked: false, hideWhenVerified: true },
-  { id: 'ngo-programs', label: 'Browse Programs', icon: 'layers', locked: false },
-  { id: 'ngo-request-donations', label: 'Request Donations', icon: 'package', locked: true },
-  { id: 'ngo-request-funds', label: 'Request Financial Assistance', icon: 'banknote', locked: true },
-  { id: 'ngo-inventory', label: 'Inventory', icon: 'warehouse', locked: true },
-  { id: 'ngo-beneficiaries', label: 'Beneficiaries', icon: 'users', locked: true },
-  { id: 'ngo-my-requests', label: 'My Requests', icon: 'clipboard-list', locked: false },
-  { id: 'ngo-reports', label: 'Reports', icon: 'bar-chart-3', locked: true },
-  { id: 'ngo-notifications', label: 'Notifications', icon: 'bell', locked: false },
-  { id: 'ngo-profile', label: 'Profile', icon: 'building-2', locked: false },
-  { id: 'ngo-settings', label: 'Settings', icon: 'settings', locked: false }
+  { id: 'ngo-dashboard', label: 'Dashboard', icon: 'layout-dashboard', group: 'main', locked: false },
+  { id: 'ngo-verify', label: 'Verification', icon: 'shield-check', group: 'management', locked: false },
+  { id: 'ngo-request-donations', label: 'Request Donations', icon: 'package', group: 'donations', locked: true },
+  { id: 'ngo-request-funds', label: 'Request Funds', icon: 'banknote', group: 'support', locked: true },
+  { id: 'ngo-inventory', label: 'Inventory', icon: 'warehouse', group: 'donations', locked: true },
+  { id: 'ngo-beneficiaries', label: 'Beneficiaries', icon: 'users', group: 'support', locked: true },
+  { id: 'ngo-reports', label: 'Reports', icon: 'bar-chart-3', group: 'management', locked: true },
+  { id: 'ngo-programs', label: 'Programs', icon: 'layers', group: 'donations', locked: true },
+  { id: 'ngo-my-requests', label: 'My Requests', icon: 'clipboard-list', group: 'donations', locked: true },
+  { id: 'ngo-notifications', label: 'Notifications', icon: 'bell', group: 'management', locked: false },
+  { id: 'ngo-profile', label: 'Profile', icon: 'building-2', group: 'account', locked: false },
+  { id: 'ngo-settings', label: 'Settings', icon: 'settings', group: 'account', locked: false },
+];
+
+export const NGO_VERIFIED_ONLY_ROUTES = [
+  'ngo-request-donations',
+  'ngo-request-funds',
+  'ngo-inventory',
+  'ngo-beneficiaries',
+  'ngo-reports',
+  'ngo-programs',
+  'ngo-my-requests',
 ];
 
 export const NGO_LOCKED_TABS = [
@@ -145,18 +125,3 @@ export const NGO_LOCKED_TABS = [
   'ngo-beneficiaries', 'ngo-reports'
 ];
 
-export const ADMIN_NAV = [
-  { id: 'admin-dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-  { id: 'admin-priority-queue', label: 'Priority Queue', icon: 'list-todo' },
-  { id: 'admin-verifications', label: 'Verification Queue', icon: 'shield-check' },
-  { id: 'admin-donations', label: 'Donation Management', icon: 'gift' },
-  { id: 'admin-financial-assistance', label: 'Financial Assistance', icon: 'file-heart' },
-  { id: 'admin-ngos', label: 'NGO Management', icon: 'building-2' },
-  { id: 'admin-inventory', label: 'Item Inventory', icon: 'package' },
-  { id: 'admin-funds', label: 'Fund Management', icon: 'wallet' },
-  { id: 'admin-users', label: 'User Management', icon: 'users' },
-  { id: 'admin-notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'admin-reports', label: 'Reports & Analytics', icon: 'bar-chart-3' },
-  { id: 'admin-logs', label: 'System Logs', icon: 'scroll-text' },
-  { id: 'admin-settings', label: 'Settings', icon: 'settings' }
-];

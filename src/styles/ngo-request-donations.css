@@ -736,13 +736,13 @@ button.rd-cat-card.is-selected .rd-cat-card__icon {
 
 .rd-btn--primary {
   color: #FFFFFF !important;
-  background: #22C55E !important;
-  border: 1px solid #22C55E !important;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.22) !important;
+  background: #1268E8 !important;
+  border: 1px solid #1268E8 !important;
+  box-shadow: 0 4px 12px rgba(18, 104, 232, 0.22) !important;
 }
 
 .rd-btn--primary:hover:not(:disabled) {
-  background: #16A34A !important;
+  background: #0F54BE !important;
   transform: translateY(-1px);
 }
 
@@ -1073,6 +1073,19 @@ button.rd-cat-card.is-selected .rd-cat-card__icon {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
   border-top: 1px solid #F1F5F9;
+}
+
+.rd-review-actions--split {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rd-review-actions__primary {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 /* ========== Success ========== */

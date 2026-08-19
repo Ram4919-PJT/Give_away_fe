@@ -4,14 +4,18 @@
 @import '../../legacy/donor-module.css';
 @import '../../legacy/receiver-module.css';
 @import './receiver-enhancements.css';
+@import './receiver-dashboard.css';
 @import './receiver-apply-flow.css';
 @import './receiver-applications.css';
 @import './login-enhancements.css';
+@import './auth-session.css';
 @import './register-enhancements.css';
 @import './dashboard-enhancements.css';
 @import './button-system.css';
+@import './flow-nav.css';
 @import './dashboard-header.css';
 @import './donor-enhancements.css';
+@import './donor-dashboard.css';
 @import '../../legacy/ngo-module.css';
 @import './ngo-enhancements.css';
 @import './ngo-dashboard.css';
@@ -27,21 +31,33 @@
 @import './receiver-profile.css';
 @import './receiver-settings.css';
 @import './landing-enhancements.css';
+@import './giveaway-home.css';
 @import './mobile-home-mockup.css';
-@import './admin-enhancements.css';
-@import './admin-dashboard.css';
-@import './admin-modules.css';
-@import './admin-verification-queue.css';
-@import './admin-fund-dashboard.css';
-@import './admin-reports-dashboard.css';
-@import './admin-logs-dashboard.css';
-@import './admin-settings-dashboard.css';
-@import './logout-ui.css';
+@import './giveaway-portal-mockup.css';
+@import './notifications-center.css';
+@import './item-donation-workflow.css';
+@import './location.css';
+@import './payment-checkout.css';
+@import './kyc-wizard.css';
+@import './donor-verification.css';
+@import './receiver-kyc.css';
+
+.app-shell--landing {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #ebf4ff 0%, #ffffff 100%);
+}
 
 .app-shell--mobile-mockup {
   min-height: 100vh;
   min-height: 100dvh;
   background: transparent;
+}
+
+.app-shell--portal-mockup {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #ffffff;
 }
 
 
@@ -238,4 +254,43 @@ button.footer-link:hover {
   .donor-stats-grid--5 {
     grid-template-columns: 1fr;
   }
+}
+
+/* API-driven empty states */
+.api-empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: #fff;
+  border: 1px dashed #DCE8FA;
+  border-radius: 1rem;
+}
+.api-empty--compact {
+  padding: 1.5rem 1rem;
+}
+.api-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 1rem;
+  background: #EEF5FF;
+  color: #1268E8;
+}
+.api-empty__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0B245B;
+}
+.api-empty__desc {
+  margin: 0 auto 1.25rem;
+  max-width: 28rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #49638F;
+}
+.api-empty__btn {
+  margin-top: 0.25rem;
 }

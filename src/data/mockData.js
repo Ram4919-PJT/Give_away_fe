@@ -14,7 +14,6 @@ export function createInitialState() {
     receiverNotifications: [],
     ngoRequests: [],
     ngoNotifications: [],
-    ngoBeneficiaries: [],
-    adminNotifications: []
+    ngoBeneficiaries: []
   };
 }

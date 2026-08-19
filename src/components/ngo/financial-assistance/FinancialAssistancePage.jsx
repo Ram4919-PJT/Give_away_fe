@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useToast } from '../../ui/Toast';
+import { coreClient } from '../../../api/platformApi';
 import {
   FINANCIAL_PURPOSE_CATEGORIES,
   FINANCIAL_PRIORITY_OPTIONS,
@@ -124,12 +125,13 @@ function LiveSummary({ form }) {
 }
 
 export default function FinancialAssistancePage() {
-  const { currentUser, dispatch } = useApp();
+  const { currentUser, ngoProfile, refreshPlatformData } = useApp();
   const { showToast } = useToast();
   const fileRef = useRef(null);
   const [form, setForm] = useState({ ...INITIAL_FINANCIAL_FORM });
   const [amountDisplay, setAmountDisplay] = useState('');
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const patch = (updates) => setForm((prev) => ({ ...prev, ...updates }));
 
@@ -218,20 +220,42 @@ export default function FinancialAssistancePage() {
   };
 
   const handleSaveDraft = () => {
-    dispatch({ type: 'ADD_NGO_REQUEST', payload: buildPayload('Draft') });
-    showToast('Financial request saved as draft', 'success');
+    showToast('Draft saving is not available — complete and submit the form.', 'info');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
       showToast('Please complete the required fields', 'error');
       return;
     }
+    const ngoId = ngoProfile?.ngo_id;
+    if (!ngoId) {
+      showToast('NGO profile not found. Complete registration first.', 'error');
+      return;
+    }
+    const purpose = getPurposeById(form.purposeCategory);
+    const purposeText = [
+      purpose?.label || form.purposeCategory,
+      form.beneficiaryDetails?.trim(),
+      form.notes?.trim(),
+    ].filter(Boolean).join(' — ');
 
-    dispatch({ type: 'ADD_NGO_REQUEST', payload: buildPayload('Submitted') });
-    showToast('Financial request submitted!', 'success');
-    resetForm();
+    setSubmitting(true);
+    try {
+      await coreClient.createNgoFundRequest({
+        ngo_id: ngoId,
+        amount_requested: Number(form.amount),
+        purpose: purposeText,
+      });
+      await refreshPlatformData('ngo', currentUser?.email);
+      showToast('Financial request submitted!', 'success');
+      resetForm();
+    } catch (err) {
+      showToast(err.message || 'Could not submit request.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const valid = isFinancialFormValid(form);
